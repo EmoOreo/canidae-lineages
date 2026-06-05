@@ -1,6 +1,7 @@
 import "./style.css";
 import { createFounderAnimals } from "./genetics/createFounderAnimals";
 import { resolveCompatibility } from "./breeding/resolveCompatibility";
+import { resolveLineage } from "./lineage/resolveLineage";
 
 async function loadJson(path: string) {
   const response = await fetch(path);
@@ -37,18 +38,27 @@ async function bootstrap() {
     const fox = founders.find((animal) => animal.speciesId === "vulpes_vulpes");
     const dog = founders.find((animal) => animal.speciesId === "canis_lupus_familiaris");
 
+    const wolfDog =
+      wolf && dog ? resolveCompatibility(wolf, dog, species) : null;
+
     const wolfCoyote =
       wolf && coyote ? resolveCompatibility(wolf, coyote, species) : null;
 
     const wolfFox =
       wolf && fox ? resolveCompatibility(wolf, fox, species) : null;
 
-    const wolfDog =
-      wolf && dog ? resolveCompatibility(wolf, dog, species) : null;
+    const wolfDogLineage =
+      wolf && dog ? resolveLineage(wolf, dog) : null;
+
+    const wolfCoyoteLineage =
+      wolf && coyote ? resolveLineage(wolf, coyote) : null;
+
+    const wolfFoxLineage =
+      wolf && fox ? resolveLineage(wolf, fox) : null;
 
     app.innerHTML = `
       <h1>Canidae: Lineages</h1>
-      <h2>Phase 2A - Sprint 3 Compatibility Resolver</h2>
+      <h2>Phase 2A - Sprint 4 Lineage Resolver</h2>
 
       <section>
         <p><strong>Species Loaded:</strong> ${species.canids?.length ?? "Unknown"}</p>
@@ -89,9 +99,34 @@ async function bootstrap() {
         <h4>Wolf × Red Fox</h4>
         <pre>${JSON.stringify(wolfFox, null, 2)}</pre>
       </section>
+
+      <section>
+        <h3>Lineage Tests</h3>
+
+        <h4>Wolf × Dog</h4>
+        <pre>${JSON.stringify(wolfDogLineage, null, 2)}</pre>
+
+        <h4>Wolf × Coyote</h4>
+        <pre>${JSON.stringify(wolfCoyoteLineage, null, 2)}</pre>
+
+        <h4>Wolf × Red Fox</h4>
+        <pre>${JSON.stringify(wolfFoxLineage, null, 2)}</pre>
+      </section>
     `;
 
-    console.log({ species, traits, breedingRules, mutations, founders, wolfDog, wolfCoyote, wolfFox });
+    console.log({
+      species,
+      traits,
+      breedingRules,
+      mutations,
+      founders,
+      wolfDog,
+      wolfCoyote,
+      wolfFox,
+      wolfDogLineage,
+      wolfCoyoteLineage,
+      wolfFoxLineage,
+    });
   } catch (error) {
     app.innerHTML = `
       <h1>Canidae: Lineages</h1>
