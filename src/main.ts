@@ -10,6 +10,23 @@ interface SaveData {
   animals: Animal[];
 }
 
+type BreedMode = "realistic" | "sandbox";
+type SortMode = "name" | "generation" | "fertility" | "stability" | "mutations";
+
+interface KennelFilters {
+  search: string;
+  species: string;
+  generation: string;
+  sort: SortMode;
+}
+
+const DEFAULT_FILTERS: KennelFilters = {
+  search: "",
+  species: "all",
+  generation: "all",
+  sort: "name",
+};
+
 async function loadJson(path: string) {
   const response = await fetch(path);
 
@@ -21,28 +38,16 @@ async function loadJson(path: string) {
 }
 
 function saveAnimals(animals: Animal[]) {
-  const saveData: SaveData = {
-    animals,
-  };
-
-  localStorage.setItem(SAVE_KEY, JSON.stringify(saveData));
+  localStorage.setItem(SAVE_KEY, JSON.stringify({ animals }));
 }
 
 function loadSavedAnimals(): Animal[] | null {
   const rawSave = localStorage.getItem(SAVE_KEY);
-
-  if (!rawSave) {
-    return null;
-  }
+  if (!rawSave) return null;
 
   try {
     const parsed = JSON.parse(rawSave) as SaveData;
-
-    if (!Array.isArray(parsed.animals)) {
-      return null;
-    }
-
-    return parsed.animals;
+    return Array.isArray(parsed.animals) ? parsed.animals : null;
   } catch {
     return null;
   }
@@ -54,10 +59,7 @@ function clearSave() {
 
 function renderPhenotype(phenotype: Record<string, unknown>): string {
   return Object.entries(phenotype)
-    .map(
-      ([key, value]) =>
-        `<li><strong>${key}:</strong> ${JSON.stringify(value)}</li>`
-    )
+    .map(([key, value]) => `<li><strong>${key}:</strong> ${JSON.stringify(value)}</li>`)
     .join("");
 }
 
@@ -88,11 +90,76 @@ function renderAnimal(animal: Animal): string {
 
 function renderAnimalOptions(animals: Animal[]): string {
   return animals
-    .map(
-      (animal) =>
-        `<option value="${animal.id}">${animal.name} — ${animal.speciesId}</option>`
-    )
+    .map((animal) => `<option value="${animal.id}">${animal.name} — ${animal.speciesId}</option>`)
     .join("");
+}
+
+function getUniqueSpecies(animals: Animal[]): string[] {
+  return Array.from(new Set(animals.map((animal) => animal.speciesId))).sort();
+}
+
+function getUniqueGenerations(animals: Animal[]): number[] {
+  return Array.from(new Set(animals.map((animal) => animal.generation))).sort(
+    (a, b) => a - b
+  );
+}
+
+function applyKennelFilters(animals: Animal[], filters: KennelFilters): Animal[] {
+  let result = [...animals];
+
+  const search = filters.search.trim().toLowerCase();
+
+  if (search) {
+    result = result.filter(
+      (animal) =>
+        animal.name.toLowerCase().includes(search) ||
+        animal.speciesId.toLowerCase().includes(search) ||
+        animal.id.toLowerCase().includes(search)
+    );
+  }
+
+  if (filters.species !== "all") {
+    result = result.filter((animal) => animal.speciesId === filters.species);
+  }
+
+  if (filters.generation !== "all") {
+    const generation = Number(filters.generation);
+    result = result.filter((animal) => animal.generation === generation);
+  }
+
+  result.sort((a, b) => {
+    if (filters.sort === "generation") return b.generation - a.generation;
+    if (filters.sort === "fertility") return b.stats.fertility - a.stats.fertility;
+    if (filters.sort === "stability") return b.stats.stability - a.stats.stability;
+    if (filters.sort === "mutations") return b.genome.M.length - a.genome.M.length;
+    return a.name.localeCompare(b.name);
+  });
+
+  return result;
+}
+
+function renderSpeciesFilterOptions(animals: Animal[], selected: string): string {
+  return [
+    `<option value="all" ${selected === "all" ? "selected" : ""}>All Species</option>`,
+    ...getUniqueSpecies(animals).map(
+      (speciesId) =>
+        `<option value="${speciesId}" ${
+          selected === speciesId ? "selected" : ""
+        }>${speciesId}</option>`
+    ),
+  ].join("");
+}
+
+function renderGenerationFilterOptions(animals: Animal[], selected: string): string {
+  return [
+    `<option value="all" ${selected === "all" ? "selected" : ""}>All Generations</option>`,
+    ...getUniqueGenerations(animals).map(
+      (generation) =>
+        `<option value="${generation}" ${
+          selected === String(generation) ? "selected" : ""
+        }>Generation ${generation}</option>`
+    ),
+  ].join("");
 }
 
 function renderApp(
@@ -101,10 +168,11 @@ function renderApp(
   breedingRules: any,
   mutations: any,
   animals: Animal[],
-  latestOffspring: Animal | null,
-  latestCompatibility: any,
-  selectedMode: "realistic" | "sandbox",
-  saveStatus: string
+  latestOffspring: Animal | null = null,
+  latestCompatibility: any = null,
+  selectedMode: BreedMode = "realistic",
+  saveStatus = "Loaded.",
+  filters: KennelFilters = DEFAULT_FILTERS
 ) {
   const app = document.querySelector<HTMLDivElement>("#app");
 
@@ -113,22 +181,22 @@ function renderApp(
     return;
   }
 
+  const activeFilters = filters ?? DEFAULT_FILTERS;
+  const visibleAnimals = applyKennelFilters(animals, activeFilters);
+
   app.innerHTML = `
     <h1>Canidae: Lineages</h1>
-    <h2>Phase 2A - Sprint 10 Save Persistence</h2>
+    <h2>Phase 2A - Sprint 11 Kennel Management</h2>
 
     <section>
       <p><strong>Species Loaded:</strong> ${species.canids?.length ?? "Unknown"}</p>
-      <p><strong>Trait Categories:</strong> ${
-        Object.keys(traits.categories ?? {}).length
-      }</p>
-      <p><strong>Breeding Rules:</strong> ${
-        breedingRules ? "Loaded" : "Missing"
-      }</p>
+      <p><strong>Trait Categories:</strong> ${Object.keys(traits.categories ?? {}).length}</p>
+      <p><strong>Breeding Rules:</strong> ${breedingRules ? "Loaded" : "Missing"}</p>
       <p><strong>Mutation Catalog:</strong> ${
         mutations.mutations?.length ?? "Unknown"
       } mutations loaded</p>
       <p><strong>Animals in Kennel:</strong> ${animals.length}</p>
+      <p><strong>Visible Animals:</strong> ${visibleAnimals.length}</p>
       <p><strong>Save Status:</strong> ${saveStatus}</p>
     </section>
 
@@ -143,32 +211,63 @@ function renderApp(
       <h3>Breeding Lab</h3>
 
       <label for="parentA">Parent A</label><br />
-      <select id="parentA">
-        ${renderAnimalOptions(animals)}
-      </select>
+      <select id="parentA">${renderAnimalOptions(animals)}</select>
 
       <br /><br />
 
       <label for="parentB">Parent B</label><br />
-      <select id="parentB">
-        ${renderAnimalOptions(animals)}
-      </select>
+      <select id="parentB">${renderAnimalOptions(animals)}</select>
 
       <br /><br />
 
       <label for="mode">Mode</label><br />
       <select id="mode">
-        <option value="realistic" ${
-          selectedMode === "realistic" ? "selected" : ""
-        }>Realistic</option>
-        <option value="sandbox" ${
-          selectedMode === "sandbox" ? "selected" : ""
-        }>Sandbox</option>
+        <option value="realistic" ${selectedMode === "realistic" ? "selected" : ""}>Realistic</option>
+        <option value="sandbox" ${selectedMode === "sandbox" ? "selected" : ""}>Sandbox</option>
       </select>
 
       <br /><br />
 
       <button id="breedButton">Breed Selected Parents</button>
+    </section>
+
+    <hr />
+
+    <section>
+      <h3>Kennel Management</h3>
+
+      <label for="searchInput">Search</label><br />
+      <input id="searchInput" type="text" value="${activeFilters.search}" placeholder="Search name, species, or ID" />
+
+      <br /><br />
+
+      <label for="speciesFilter">Species</label><br />
+      <select id="speciesFilter">
+        ${renderSpeciesFilterOptions(animals, activeFilters.species)}
+      </select>
+
+      <br /><br />
+
+      <label for="generationFilter">Generation</label><br />
+      <select id="generationFilter">
+        ${renderGenerationFilterOptions(animals, activeFilters.generation)}
+      </select>
+
+      <br /><br />
+
+      <label for="sortFilter">Sort</label><br />
+      <select id="sortFilter">
+        <option value="name" ${activeFilters.sort === "name" ? "selected" : ""}>Name A-Z</option>
+        <option value="generation" ${activeFilters.sort === "generation" ? "selected" : ""}>Generation High-Low</option>
+        <option value="fertility" ${activeFilters.sort === "fertility" ? "selected" : ""}>Fertility High-Low</option>
+        <option value="stability" ${activeFilters.sort === "stability" ? "selected" : ""}>Stability High-Low</option>
+        <option value="mutations" ${activeFilters.sort === "mutations" ? "selected" : ""}>Mutation Count High-Low</option>
+      </select>
+
+      <br /><br />
+
+      <button id="applyFiltersButton">Apply Filters</button>
+      <button id="clearFiltersButton">Clear Filters</button>
     </section>
 
     <hr />
@@ -180,18 +279,14 @@ function renderApp(
 
     <section>
       <h3>Latest Offspring</h3>
-      ${
-        latestOffspring
-          ? renderAnimal(latestOffspring)
-          : "<p>No offspring generated yet.</p>"
-      }
+      ${latestOffspring ? renderAnimal(latestOffspring) : "<p>No offspring generated yet.</p>"}
     </section>
 
     <hr />
 
     <section>
       <h3>Kennel</h3>
-      ${animals.map(renderAnimal).join("")}
+      ${visibleAnimals.map(renderAnimal).join("")}
     </section>
   `;
 
@@ -202,13 +297,26 @@ function renderApp(
   const saveButton = document.querySelector<HTMLButtonElement>("#saveButton");
   const resetButton = document.querySelector<HTMLButtonElement>("#resetButton");
 
+  const searchInput = document.querySelector<HTMLInputElement>("#searchInput");
+  const speciesFilter = document.querySelector<HTMLSelectElement>("#speciesFilter");
+  const generationFilter = document.querySelector<HTMLSelectElement>("#generationFilter");
+  const sortFilter = document.querySelector<HTMLSelectElement>("#sortFilter");
+  const applyFiltersButton = document.querySelector<HTMLButtonElement>("#applyFiltersButton");
+  const clearFiltersButton = document.querySelector<HTMLButtonElement>("#clearFiltersButton");
+
   if (
     !parentASelect ||
     !parentBSelect ||
     !modeSelect ||
     !breedButton ||
     !saveButton ||
-    !resetButton
+    !resetButton ||
+    !searchInput ||
+    !speciesFilter ||
+    !generationFilter ||
+    !sortFilter ||
+    !applyFiltersButton ||
+    !clearFiltersButton
   ) {
     return;
   }
@@ -229,7 +337,8 @@ function renderApp(
       latestOffspring,
       latestCompatibility,
       selectedMode,
-      "Kennel saved."
+      "Kennel saved.",
+      activeFilters
     );
   });
 
@@ -246,14 +355,51 @@ function renderApp(
       resetAnimals,
       null,
       null,
-      "Save reset. Founder kennel restored."
+      "realistic",
+      "Save reset. Founder kennel restored.",
+      DEFAULT_FILTERS
+    );
+  });
+
+  applyFiltersButton.addEventListener("click", () => {
+    renderApp(
+      species,
+      traits,
+      breedingRules,
+      mutations,
+      animals,
+      latestOffspring,
+      latestCompatibility,
+      selectedMode,
+      saveStatus,
+      {
+        search: searchInput.value,
+        species: speciesFilter.value,
+        generation: generationFilter.value,
+        sort: sortFilter.value as SortMode,
+      }
+    );
+  });
+
+  clearFiltersButton.addEventListener("click", () => {
+    renderApp(
+      species,
+      traits,
+      breedingRules,
+      mutations,
+      animals,
+      latestOffspring,
+      latestCompatibility,
+      selectedMode,
+      saveStatus,
+      DEFAULT_FILTERS
     );
   });
 
   breedButton.addEventListener("click", () => {
     const parentA = animals.find((animal) => animal.id === parentASelect.value);
     const parentB = animals.find((animal) => animal.id === parentBSelect.value);
-    const mode = modeSelect.value as "realistic" | "sandbox";
+    const mode = modeSelect.value as BreedMode;
 
     if (!parentA || !parentB) return;
 
@@ -270,11 +416,11 @@ function renderApp(
         {
           ...compatibility,
           blocked: true,
-          blockedReason:
-            "This pairing is blocked in Realistic Mode. Try Sandbox Mode.",
+          blockedReason: "This pairing is blocked in Realistic Mode. Try Sandbox Mode.",
         },
         mode,
-        saveStatus
+        saveStatus,
+        activeFilters
       );
       return;
     }
@@ -293,7 +439,8 @@ function renderApp(
       offspring,
       compatibility,
       mode,
-      "Offspring generated and kennel auto-saved."
+      "Offspring generated and kennel auto-saved.",
+      activeFilters
     );
   });
 }
@@ -327,7 +474,9 @@ async function bootstrap() {
       animals,
       null,
       null,
-      "Loaded."
+      "realistic",
+      "Loaded.",
+      DEFAULT_FILTERS
     );
   } catch (error) {
     app.innerHTML = `
