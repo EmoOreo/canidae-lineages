@@ -2,6 +2,7 @@ import "./style.css";
 import { createFounderAnimals } from "./genetics/createFounderAnimals";
 import { resolveCompatibility } from "./breeding/resolveCompatibility";
 import { resolveLineage } from "./lineage/resolveLineage";
+import { createOffspring } from "./breeding/createOffspring";
 
 async function loadJson(path: string) {
   const response = await fetch(path);
@@ -36,7 +37,9 @@ async function bootstrap() {
     const wolf = founders.find((animal) => animal.speciesId === "canis_lupus");
     const coyote = founders.find((animal) => animal.speciesId === "canis_latrans");
     const fox = founders.find((animal) => animal.speciesId === "vulpes_vulpes");
-    const dog = founders.find((animal) => animal.speciesId === "canis_lupus_familiaris");
+    const dog = founders.find(
+      (animal) => animal.speciesId === "canis_lupus_familiaris"
+    );
 
     const wolfDog =
       wolf && dog ? resolveCompatibility(wolf, dog, species) : null;
@@ -56,15 +59,28 @@ async function bootstrap() {
     const wolfFoxLineage =
       wolf && fox ? resolveLineage(wolf, fox) : null;
 
+    const wolfDogOffspring =
+      wolf && dog && wolfDog ? createOffspring(wolf, dog, wolfDog) : null;
+
+    const wolfCoyoteOffspring =
+      wolf && coyote && wolfCoyote
+        ? createOffspring(wolf, coyote, wolfCoyote)
+        : null;
+
+    const wolfFoxOffspring =
+      wolf && fox && wolfFox ? createOffspring(wolf, fox, wolfFox) : null;
+
     app.innerHTML = `
       <h1>Canidae: Lineages</h1>
-      <h2>Phase 2A - Sprint 4 Lineage Resolver</h2>
+      <h2>Phase 2A - Sprint 5 Offspring Generator</h2>
 
       <section>
         <p><strong>Species Loaded:</strong> ${species.canids?.length ?? "Unknown"}</p>
         <p><strong>Trait Library:</strong> Loaded</p>
         <p><strong>Breeding Rules:</strong> Loaded</p>
-        <p><strong>Mutation Catalog:</strong> ${mutations.mutations?.length ?? "Unknown"} mutations loaded</p>
+        <p><strong>Mutation Catalog:</strong> ${
+          mutations.mutations?.length ?? "Unknown"
+        } mutations loaded</p>
       </section>
 
       <section>
@@ -112,6 +128,19 @@ async function bootstrap() {
         <h4>Wolf × Red Fox</h4>
         <pre>${JSON.stringify(wolfFoxLineage, null, 2)}</pre>
       </section>
+
+      <section>
+        <h3>Offspring Tests</h3>
+
+        <h4>Wolf × Dog Offspring</h4>
+        <pre>${JSON.stringify(wolfDogOffspring, null, 2)}</pre>
+
+        <h4>Wolf × Coyote Offspring</h4>
+        <pre>${JSON.stringify(wolfCoyoteOffspring, null, 2)}</pre>
+
+        <h4>Wolf × Red Fox Sandbox Offspring</h4>
+        <pre>${JSON.stringify(wolfFoxOffspring, null, 2)}</pre>
+      </section>
     `;
 
     console.log({
@@ -126,6 +155,9 @@ async function bootstrap() {
       wolfDogLineage,
       wolfCoyoteLineage,
       wolfFoxLineage,
+      wolfDogOffspring,
+      wolfCoyoteOffspring,
+      wolfFoxOffspring,
     });
   } catch (error) {
     app.innerHTML = `
