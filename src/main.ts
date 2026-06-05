@@ -63,13 +63,42 @@ function renderPhenotype(phenotype: Record<string, unknown>): string {
     .join("");
 }
 
-function renderAnimal(animal: Animal): string {
+function findAnimalById(animals: Animal[], id: string | null): Animal | null {
+  if (!id) return null;
+  return animals.find((animal) => animal.id === id) ?? null;
+}
+
+function renderPedigree(animal: Animal, animals: Animal[], depth = 0, maxDepth = 3): string {
+  const indent = "&nbsp;".repeat(depth * 4);
+  const label = `${indent}${depth === 0 ? "" : "└─ "}${animal.name} (${animal.speciesId})`;
+
+  if (depth >= maxDepth) {
+    return `<div>${label}</div>`;
+  }
+
+  const mother = findAnimalById(animals, animal.motherId);
+  const father = findAnimalById(animals, animal.fatherId);
+
+  if (!mother && !father) {
+    return `<div>${label}</div>`;
+  }
+
+  return `
+    <div>${label}</div>
+    ${mother ? renderPedigree(mother, animals, depth + 1, maxDepth) : `<div>${indent}&nbsp;&nbsp;&nbsp;&nbsp;└─ Unknown mother</div>`}
+    ${father ? renderPedigree(father, animals, depth + 1, maxDepth) : `<div>${indent}&nbsp;&nbsp;&nbsp;&nbsp;└─ Unknown father</div>`}
+  `;
+}
+
+function renderAnimal(animal: Animal, animals: Animal[]): string {
   return `
     <article>
       <h4>${animal.name}</h4>
       <p><strong>ID:</strong> ${animal.id}</p>
       <p><strong>Species ID:</strong> ${animal.speciesId}</p>
       <p><strong>Generation:</strong> ${animal.generation}</p>
+      <p><strong>Mother:</strong> ${animal.motherName ?? "Founder"}</p>
+      <p><strong>Father:</strong> ${animal.fatherName ?? "Founder"}</p>
       <p><strong>D Traits:</strong> ${animal.genome.D.length}</p>
       <p><strong>R Carriers:</strong> ${
         animal.genome.R.length ? animal.genome.R.join(", ") : "None"
@@ -80,9 +109,17 @@ function renderAnimal(animal: Animal): string {
       <p><strong>Fertility:</strong> ${animal.stats.fertility}</p>
       <p><strong>Stability:</strong> ${animal.stats.stability}</p>
       <p><strong>Lineage:</strong> ${JSON.stringify(animal.genome.L)}</p>
+
       <details>
         <summary>Phenotype</summary>
         <ul>${renderPhenotype(animal.phenotype)}</ul>
+      </details>
+
+      <details>
+        <summary>Pedigree</summary>
+        <div style="font-family: monospace;">
+          ${renderPedigree(animal, animals)}
+        </div>
       </details>
     </article>
   `;
@@ -186,7 +223,7 @@ function renderApp(
 
   app.innerHTML = `
     <h1>Canidae: Lineages</h1>
-    <h2>Phase 2A - Sprint 11 Kennel Management</h2>
+    <h2>Phase 2A - Sprint 12B Pedigree System</h2>
 
     <section>
       <p><strong>Species Loaded:</strong> ${species.canids?.length ?? "Unknown"}</p>
@@ -279,14 +316,14 @@ function renderApp(
 
     <section>
       <h3>Latest Offspring</h3>
-      ${latestOffspring ? renderAnimal(latestOffspring) : "<p>No offspring generated yet.</p>"}
+      ${latestOffspring ? renderAnimal(latestOffspring, animals) : "<p>No offspring generated yet.</p>"}
     </section>
 
     <hr />
 
     <section>
       <h3>Kennel</h3>
-      ${visibleAnimals.map(renderAnimal).join("")}
+      ${visibleAnimals.map((animal) => renderAnimal(animal, animals)).join("")}
     </section>
   `;
 

@@ -42,10 +42,15 @@ export function createOffspring(
   const hybridName = createHybridName(parentA, parentB);
 
   return {
-    id: `offspring_${Date.now()}`,
+    id: `offspring_${Date.now()}_${Math.floor(Math.random() * 100000)}`,
     name: `${hybridName} G${generation}`,
     speciesId: "hybrid",
     generation,
+
+    motherId: parentA.id,
+    fatherId: parentB.id,
+    motherName: parentA.name,
+    fatherName: parentB.name,
 
     genome: {
       D: Object.keys(phenotype),

@@ -6,6 +6,11 @@ export interface Animal {
   speciesId: string;
   generation: number;
 
+  motherId: string | null;
+  fatherId: string | null;
+  motherName: string | null;
+  fatherName: string | null;
+
   genome: {
     D: string[];
     R: string[];

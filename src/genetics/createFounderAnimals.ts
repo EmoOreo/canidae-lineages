@@ -130,6 +130,11 @@ export function createFounderAnimals(speciesData: any): Animal[] {
       speciesId: species.id,
       generation: 0,
 
+      motherId: null,
+      fatherId: null,
+      motherName: null,
+      fatherName: null,
+
       genome: {
         D: Object.keys(createFounderPhenotype(species)),
         R: [],
