@@ -1,4 +1,6 @@
 import "./style.css";
+import { createFounderAnimals } from "./genetics/createFounderAnimals";
+import { resolveCompatibility } from "./breeding/resolveCompatibility";
 
 async function loadJson(path: string) {
   const response = await fetch(path);
@@ -10,41 +12,15 @@ async function loadJson(path: string) {
   return response.json();
 }
 
-function createFounderAnimals(speciesData: any) {
-  const starterSpecies = [
-    "canis_lupus_familiaris",
-    "canis_lupus",
-    "canis_latrans",
-    "vulpes_vulpes",
-    "vulpes_zerda",
-    "aenocyon_dirus",
-  ];
-
-  return starterSpecies
-    .map((id) => speciesData.canids.find((c: any) => c.id === id))
-    .filter(Boolean)
-    .map((species: any, index: number) => ({
-      id: `founder_${index}`,
-      name: `${species.commonName} Alpha`,
-      speciesId: species.id,
-      generation: 0,
-      genome: {
-        D: [],
-        R: [],
-        M: [],
-        L: {
-          [species.id]: 100,
-        },
-      },
-      stats: {
-        fertility: species.fertilityBaseline ?? 50,
-        stability: 100,
-      },
-    }));
-}
-
 async function bootstrap() {
-  document.body.innerHTML = "<h1>Loading Canidae: Lineages...</h1>";
+  const app = document.querySelector<HTMLDivElement>("#app");
+
+  if (!app) {
+    document.body.innerHTML = "<h1>Error: #app not found</h1>";
+    return;
+  }
+
+  app.innerHTML = "<h1>Loading Canidae: Lineages...</h1>";
 
   try {
     const [species, traits, breedingRules, mutations] = await Promise.all([
@@ -56,35 +32,73 @@ async function bootstrap() {
 
     const founders = createFounderAnimals(species);
 
-    document.body.innerHTML = `
+    const wolf = founders.find((animal) => animal.speciesId === "canis_lupus");
+    const coyote = founders.find((animal) => animal.speciesId === "canis_latrans");
+    const fox = founders.find((animal) => animal.speciesId === "vulpes_vulpes");
+    const dog = founders.find((animal) => animal.speciesId === "canis_lupus_familiaris");
+
+    const wolfCoyote =
+      wolf && coyote ? resolveCompatibility(wolf, coyote, species) : null;
+
+    const wolfFox =
+      wolf && fox ? resolveCompatibility(wolf, fox, species) : null;
+
+    const wolfDog =
+      wolf && dog ? resolveCompatibility(wolf, dog, species) : null;
+
+    app.innerHTML = `
       <h1>Canidae: Lineages</h1>
-      <h2>Founder Animals Loaded</h2>
-      <p>Species Loaded: ${species.canids?.length ?? "Unknown"}</p>
-      <p>Founders Created: ${founders.length}</p>
-      <ul>
-        ${founders
-          .map(
-            (animal: any) => `
-              <li>
-                <strong>${animal.name}</strong><br>
-                Species: ${animal.speciesId}<br>
-                Generation: ${animal.generation}<br>
-                Fertility: ${animal.stats.fertility}<br>
-                Stability: ${animal.stats.stability}
-              </li>
-            `
-          )
-          .join("")}
-      </ul>
-      <pre>${JSON.stringify({ founders }, null, 2)}</pre>
+      <h2>Phase 2A - Sprint 3 Compatibility Resolver</h2>
+
+      <section>
+        <p><strong>Species Loaded:</strong> ${species.canids?.length ?? "Unknown"}</p>
+        <p><strong>Trait Library:</strong> Loaded</p>
+        <p><strong>Breeding Rules:</strong> Loaded</p>
+        <p><strong>Mutation Catalog:</strong> ${mutations.mutations?.length ?? "Unknown"} mutations loaded</p>
+      </section>
+
+      <section>
+        <h3>Founder Animals</h3>
+        <ul>
+          ${founders
+            .map(
+              (animal) => `
+                <li>
+                  <strong>${animal.name}</strong><br />
+                  Species ID: ${animal.speciesId}<br />
+                  Generation: ${animal.generation}<br />
+                  Fertility: ${animal.stats.fertility}<br />
+                  Stability: ${animal.stats.stability}<br />
+                  Lineage: ${JSON.stringify(animal.genome.L)}
+                </li>
+              `
+            )
+            .join("")}
+        </ul>
+      </section>
+
+      <section>
+        <h3>Compatibility Tests</h3>
+
+        <h4>Wolf × Dog</h4>
+        <pre>${JSON.stringify(wolfDog, null, 2)}</pre>
+
+        <h4>Wolf × Coyote</h4>
+        <pre>${JSON.stringify(wolfCoyote, null, 2)}</pre>
+
+        <h4>Wolf × Red Fox</h4>
+        <pre>${JSON.stringify(wolfFox, null, 2)}</pre>
+      </section>
     `;
 
-    console.log({ species, traits, breedingRules, mutations, founders });
+    console.log({ species, traits, breedingRules, mutations, founders, wolfDog, wolfCoyote, wolfFox });
   } catch (error) {
-    document.body.innerHTML = `
-      <h1>Canidae: Lineages Error</h1>
+    app.innerHTML = `
+      <h1>Canidae: Lineages</h1>
+      <h2>Error</h2>
       <pre>${String(error)}</pre>
     `;
+
     console.error(error);
   }
 }
