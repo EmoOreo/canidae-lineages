@@ -1,8 +1,8 @@
 import "./style.css";
 import { createFounderAnimals } from "./genetics/createFounderAnimals";
 import { resolveCompatibility } from "./breeding/resolveCompatibility";
-import { resolveLineage } from "./lineage/resolveLineage";
 import { createOffspring } from "./breeding/createOffspring";
+import type { Animal } from "./types/animal";
 
 async function loadJson(path: string) {
   const response = await fetch(path);
@@ -23,14 +23,19 @@ function renderPhenotype(phenotype: Record<string, unknown>): string {
     .join("");
 }
 
-function renderAnimal(animal: any): string {
+function renderAnimal(animal: Animal): string {
   return `
     <article>
       <h4>${animal.name}</h4>
       <p><strong>Species ID:</strong> ${animal.speciesId}</p>
       <p><strong>Generation:</strong> ${animal.generation}</p>
       <p><strong>D Traits:</strong> ${animal.genome.D.length}</p>
-      <p><strong>M Mutations:</strong> ${animal.genome.M.length ? animal.genome.M.join(", ") : "None"}</p>
+      <p><strong>R Carriers:</strong> ${
+        animal.genome.R.length ? animal.genome.R.join(", ") : "None"
+      }</p>
+      <p><strong>M Mutations:</strong> ${
+        animal.genome.M.length ? animal.genome.M.join(", ") : "None"
+      }</p>
       <p><strong>Fertility:</strong> ${animal.stats.fertility}</p>
       <p><strong>Stability:</strong> ${animal.stats.stability}</p>
       <p><strong>Lineage:</strong> ${JSON.stringify(animal.genome.L)}</p>
@@ -40,6 +45,166 @@ function renderAnimal(animal: any): string {
       </details>
     </article>
   `;
+}
+
+function renderAnimalOptions(animals: Animal[]): string {
+  return animals
+    .map(
+      (animal) =>
+        `<option value="${animal.id}">${animal.name} — ${animal.speciesId}</option>`
+    )
+    .join("");
+}
+
+function renderApp(
+  species: any,
+  traits: any,
+  breedingRules: any,
+  mutations: any,
+  animals: Animal[],
+  latestOffspring: Animal | null,
+  latestCompatibility: any,
+  selectedMode: "realistic" | "sandbox"
+) {
+  const app = document.querySelector<HTMLDivElement>("#app");
+
+  if (!app) {
+    document.body.innerHTML = "<h1>Error: #app not found</h1>";
+    return;
+  }
+
+  app.innerHTML = `
+    <h1>Canidae: Lineages</h1>
+    <h2>Phase 2A - Sprint 9 Breeding UI</h2>
+
+    <section>
+      <p><strong>Species Loaded:</strong> ${species.canids?.length ?? "Unknown"}</p>
+      <p><strong>Trait Categories:</strong> ${
+        Object.keys(traits.categories ?? {}).length
+      }</p>
+      <p><strong>Breeding Rules:</strong> ${
+        breedingRules ? "Loaded" : "Missing"
+      }</p>
+      <p><strong>Mutation Catalog:</strong> ${
+        mutations.mutations?.length ?? "Unknown"
+      } mutations loaded</p>
+      <p><strong>Animals in Kennel:</strong> ${animals.length}</p>
+    </section>
+
+    <hr />
+
+    <section>
+      <h3>Breeding Lab</h3>
+
+      <label for="parentA">Parent A</label><br />
+      <select id="parentA">
+        ${renderAnimalOptions(animals)}
+      </select>
+
+      <br /><br />
+
+      <label for="parentB">Parent B</label><br />
+      <select id="parentB">
+        ${renderAnimalOptions(animals)}
+      </select>
+
+      <br /><br />
+
+      <label for="mode">Mode</label><br />
+      <select id="mode">
+        <option value="realistic" ${
+          selectedMode === "realistic" ? "selected" : ""
+        }>Realistic</option>
+        <option value="sandbox" ${
+          selectedMode === "sandbox" ? "selected" : ""
+        }>Sandbox</option>
+      </select>
+
+      <br /><br />
+
+      <button id="breedButton">Breed Selected Parents</button>
+    </section>
+
+    <hr />
+
+    <section>
+      <h3>Latest Compatibility</h3>
+      <pre>${JSON.stringify(latestCompatibility, null, 2)}</pre>
+    </section>
+
+    <section>
+      <h3>Latest Offspring</h3>
+      ${
+        latestOffspring
+          ? renderAnimal(latestOffspring)
+          : "<p>No offspring generated yet.</p>"
+      }
+    </section>
+
+    <hr />
+
+    <section>
+      <h3>Kennel</h3>
+      ${animals.map(renderAnimal).join("")}
+    </section>
+  `;
+
+  const parentASelect = document.querySelector<HTMLSelectElement>("#parentA");
+  const parentBSelect = document.querySelector<HTMLSelectElement>("#parentB");
+  const modeSelect = document.querySelector<HTMLSelectElement>("#mode");
+  const breedButton = document.querySelector<HTMLButtonElement>("#breedButton");
+
+  if (!parentASelect || !parentBSelect || !modeSelect || !breedButton) {
+    return;
+  }
+
+  if (animals[0]) parentASelect.value = animals[0].id;
+  if (animals[1]) parentBSelect.value = animals[1].id;
+  modeSelect.value = selectedMode;
+
+  breedButton.addEventListener("click", () => {
+    const parentA = animals.find((animal) => animal.id === parentASelect.value);
+    const parentB = animals.find((animal) => animal.id === parentBSelect.value);
+    const mode = modeSelect.value as "realistic" | "sandbox";
+
+    if (!parentA || !parentB) return;
+
+    const compatibility = resolveCompatibility(parentA, parentB, species);
+
+    if (mode === "realistic" && !compatibility.realisticAllowed) {
+      renderApp(
+        species,
+        traits,
+        breedingRules,
+        mutations,
+        animals,
+        null,
+        {
+          ...compatibility,
+          blocked: true,
+          blockedReason:
+            "This pairing is blocked in Realistic Mode. Try Sandbox Mode.",
+        },
+        mode
+      );
+      return;
+    }
+
+    const offspring = createOffspring(parentA, parentB, compatibility, mutations);
+
+    animals.push(offspring);
+
+    renderApp(
+      species,
+      traits,
+      breedingRules,
+      mutations,
+      animals,
+      offspring,
+      compatibility,
+      mode
+    );
+  });
 }
 
 async function bootstrap() {
@@ -60,124 +225,18 @@ async function bootstrap() {
       loadJson("/data/MUTATION_CATALOG_V1.json"),
     ]);
 
-    const founders = createFounderAnimals(species);
+    const animals = createFounderAnimals(species);
 
-    const wolf = founders.find((animal) => animal.speciesId === "canis_lupus");
-    const coyote = founders.find((animal) => animal.speciesId === "canis_latrans");
-    const fox = founders.find((animal) => animal.speciesId === "vulpes_vulpes");
-    const dog = founders.find(
-      (animal) => animal.speciesId === "canis_lupus_familiaris"
-    );
-
-    const wolfDog =
-      wolf && dog ? resolveCompatibility(wolf, dog, species) : null;
-
-    const wolfCoyote =
-      wolf && coyote ? resolveCompatibility(wolf, coyote, species) : null;
-
-    const wolfFox =
-      wolf && fox ? resolveCompatibility(wolf, fox, species) : null;
-
-    const wolfDogLineage =
-      wolf && dog ? resolveLineage(wolf, dog) : null;
-
-    const wolfCoyoteLineage =
-      wolf && coyote ? resolveLineage(wolf, coyote) : null;
-
-    const wolfFoxLineage =
-      wolf && fox ? resolveLineage(wolf, fox) : null;
-
-    const wolfDogOffspring =
-      wolf && dog && wolfDog
-        ? createOffspring(wolf, dog, wolfDog, mutations)
-        : null;
-
-    const wolfCoyoteOffspring =
-      wolf && coyote && wolfCoyote
-        ? createOffspring(wolf, coyote, wolfCoyote, mutations)
-        : null;
-
-    const wolfFoxOffspring =
-      wolf && fox && wolfFox
-        ? createOffspring(wolf, fox, wolfFox, mutations)
-        : null;
-
-    app.innerHTML = `
-      <h1>Canidae: Lineages</h1>
-      <h2>Phase 2A - Sprint 8 Trait Inheritance Engine</h2>
-
-      <section>
-        <p><strong>Species Loaded:</strong> ${species.canids?.length ?? "Unknown"}</p>
-        <p><strong>Trait Categories:</strong> ${
-          Object.keys(traits.categories ?? {}).length
-        }</p>
-        <p><strong>Breeding Rules:</strong> Loaded</p>
-        <p><strong>Mutation Catalog:</strong> ${
-          mutations.mutations?.length ?? "Unknown"
-        } mutations loaded</p>
-      </section>
-
-      <section>
-        <h3>Founder Animals With Phenotypes</h3>
-        ${founders.map(renderAnimal).join("")}
-      </section>
-
-      <section>
-        <h3>Compatibility Tests</h3>
-
-        <h4>Wolf × Dog</h4>
-        <pre>${JSON.stringify(wolfDog, null, 2)}</pre>
-
-        <h4>Wolf × Coyote</h4>
-        <pre>${JSON.stringify(wolfCoyote, null, 2)}</pre>
-
-        <h4>Wolf × Red Fox</h4>
-        <pre>${JSON.stringify(wolfFox, null, 2)}</pre>
-      </section>
-
-      <section>
-        <h3>Lineage Tests</h3>
-
-        <h4>Wolf × Dog</h4>
-        <pre>${JSON.stringify(wolfDogLineage, null, 2)}</pre>
-
-        <h4>Wolf × Coyote</h4>
-        <pre>${JSON.stringify(wolfCoyoteLineage, null, 2)}</pre>
-
-        <h4>Wolf × Red Fox</h4>
-        <pre>${JSON.stringify(wolfFoxLineage, null, 2)}</pre>
-      </section>
-
-      <section>
-        <h3>Offspring With Inherited Traits</h3>
-
-        <h4>Wolf × Dog Offspring</h4>
-        ${wolfDogOffspring ? renderAnimal(wolfDogOffspring) : "<p>Unavailable</p>"}
-
-        <h4>Wolf × Coyote Offspring</h4>
-        ${wolfCoyoteOffspring ? renderAnimal(wolfCoyoteOffspring) : "<p>Unavailable</p>"}
-
-        <h4>Wolf × Red Fox Sandbox Offspring</h4>
-        ${wolfFoxOffspring ? renderAnimal(wolfFoxOffspring) : "<p>Unavailable</p>"}
-      </section>
-    `;
-
-    console.log({
+    renderApp(
       species,
       traits,
       breedingRules,
       mutations,
-      founders,
-      wolfDog,
-      wolfCoyote,
-      wolfFox,
-      wolfDogLineage,
-      wolfCoyoteLineage,
-      wolfFoxLineage,
-      wolfDogOffspring,
-      wolfCoyoteOffspring,
-      wolfFoxOffspring,
-    });
+      animals,
+      null,
+      null,
+      "realistic"
+    );
   } catch (error) {
     app.innerHTML = `
       <h1>Canidae: Lineages</h1>
