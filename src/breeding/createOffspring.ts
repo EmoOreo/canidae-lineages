@@ -3,6 +3,7 @@ import type { CompatibilityResult } from "./resolveCompatibility";
 import { resolveLineage } from "../lineage/resolveLineage";
 import { resolveMutation } from "../genetics/resolveMutation";
 import { resolveTraits } from "../genetics/resolveTraits";
+import { createHybridName } from "./createHybridName";
 
 export function createOffspring(
   parentA: Animal,
@@ -38,9 +39,11 @@ export function createOffspring(
     mutationData
   );
 
+  const hybridName = createHybridName(parentA, parentB);
+
   return {
     id: `offspring_${Date.now()}`,
-    name: `${compatibility.label} G${generation}`,
+    name: `${hybridName} G${generation}`,
     speciesId: "hybrid",
     generation,
 
