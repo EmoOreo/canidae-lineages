@@ -23,6 +23,25 @@ function renderPhenotype(phenotype: Record<string, unknown>): string {
     .join("");
 }
 
+function renderAnimal(animal: any): string {
+  return `
+    <article>
+      <h4>${animal.name}</h4>
+      <p><strong>Species ID:</strong> ${animal.speciesId}</p>
+      <p><strong>Generation:</strong> ${animal.generation}</p>
+      <p><strong>D Traits:</strong> ${animal.genome.D.length}</p>
+      <p><strong>M Mutations:</strong> ${animal.genome.M.length ? animal.genome.M.join(", ") : "None"}</p>
+      <p><strong>Fertility:</strong> ${animal.stats.fertility}</p>
+      <p><strong>Stability:</strong> ${animal.stats.stability}</p>
+      <p><strong>Lineage:</strong> ${JSON.stringify(animal.genome.L)}</p>
+      <details>
+        <summary>Phenotype</summary>
+        <ul>${renderPhenotype(animal.phenotype)}</ul>
+      </details>
+    </article>
+  `;
+}
+
 async function bootstrap() {
   const app = document.querySelector<HTMLDivElement>("#app");
 
@@ -85,7 +104,7 @@ async function bootstrap() {
 
     app.innerHTML = `
       <h1>Canidae: Lineages</h1>
-      <h2>Phase 2A - Sprint 7 Founder Trait Generation</h2>
+      <h2>Phase 2A - Sprint 8 Trait Inheritance Engine</h2>
 
       <section>
         <p><strong>Species Loaded:</strong> ${species.canids?.length ?? "Unknown"}</p>
@@ -100,23 +119,7 @@ async function bootstrap() {
 
       <section>
         <h3>Founder Animals With Phenotypes</h3>
-        ${founders
-          .map(
-            (animal) => `
-              <article>
-                <h4>${animal.name}</h4>
-                <p><strong>Species ID:</strong> ${animal.speciesId}</p>
-                <p><strong>Generation:</strong> ${animal.generation}</p>
-                <p><strong>D Traits:</strong> ${animal.genome.D.length}</p>
-                <p><strong>Lineage:</strong> ${JSON.stringify(animal.genome.L)}</p>
-                <details>
-                  <summary>Phenotype</summary>
-                  <ul>${renderPhenotype(animal.phenotype)}</ul>
-                </details>
-              </article>
-            `
-          )
-          .join("")}
+        ${founders.map(renderAnimal).join("")}
       </section>
 
       <section>
@@ -146,16 +149,16 @@ async function bootstrap() {
       </section>
 
       <section>
-        <h3>Offspring Tests</h3>
+        <h3>Offspring With Inherited Traits</h3>
 
         <h4>Wolf × Dog Offspring</h4>
-        <pre>${JSON.stringify(wolfDogOffspring, null, 2)}</pre>
+        ${wolfDogOffspring ? renderAnimal(wolfDogOffspring) : "<p>Unavailable</p>"}
 
         <h4>Wolf × Coyote Offspring</h4>
-        <pre>${JSON.stringify(wolfCoyoteOffspring, null, 2)}</pre>
+        ${wolfCoyoteOffspring ? renderAnimal(wolfCoyoteOffspring) : "<p>Unavailable</p>"}
 
         <h4>Wolf × Red Fox Sandbox Offspring</h4>
-        <pre>${JSON.stringify(wolfFoxOffspring, null, 2)}</pre>
+        ${wolfFoxOffspring ? renderAnimal(wolfFoxOffspring) : "<p>Unavailable</p>"}
       </section>
     `;
 

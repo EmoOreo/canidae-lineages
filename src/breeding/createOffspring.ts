@@ -2,6 +2,7 @@ import type { Animal } from "../types/animal";
 import type { CompatibilityResult } from "./resolveCompatibility";
 import { resolveLineage } from "../lineage/resolveLineage";
 import { resolveMutation } from "../genetics/resolveMutation";
+import { resolveTraits } from "../genetics/resolveTraits";
 
 export function createOffspring(
   parentA: Animal,
@@ -10,6 +11,7 @@ export function createOffspring(
   mutationData: any
 ): Animal {
   const lineage = resolveLineage(parentA, parentB);
+  const phenotype = resolveTraits(parentA, parentB);
 
   const generation = Math.max(parentA.generation, parentB.generation) + 1;
 
@@ -43,13 +45,13 @@ export function createOffspring(
     generation,
 
     genome: {
-      D: [],
+      D: Object.keys(phenotype),
       R: [],
       M: mutation.mutationApplied ? [mutation.mutationId!] : [],
       L: lineage,
     },
 
-    phenotype: {},
+    phenotype,
 
     stats: {
       fertility,
