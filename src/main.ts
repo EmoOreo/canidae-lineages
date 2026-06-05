@@ -25,144 +25,130 @@ async function bootstrap() {
   app.innerHTML = "<h1>Loading Canidae: Lineages...</h1>";
 
   try {
-    const [species, traits, breedingRules, mutations] = await Promise.all([
-      loadJson("/data/canid_compendium_starter.json"),
-      loadJson("/data/trait_library_starter.json"),
-      loadJson("/data/breeding_rules_starter.json"),
-      loadJson("/data/MUTATION_CATALOG_V1.json"),
-    ]);
+    const [species, traits, breedingRules, mutations] =
+      await Promise.all([
+        loadJson("/data/canid_compendium_starter.json"),
+        loadJson("/data/trait_library_starter.json"),
+        loadJson("/data/breeding_rules_starter.json"),
+        loadJson("/data/MUTATION_CATALOG_V1.json"),
+      ]);
 
     const founders = createFounderAnimals(species);
 
-    const wolf = founders.find((animal) => animal.speciesId === "canis_lupus");
-    const coyote = founders.find((animal) => animal.speciesId === "canis_latrans");
-    const fox = founders.find((animal) => animal.speciesId === "vulpes_vulpes");
+    const wolf = founders.find(
+      (animal) => animal.speciesId === "canis_lupus"
+    );
+
+    const coyote = founders.find(
+      (animal) => animal.speciesId === "canis_latrans"
+    );
+
+    const fox = founders.find(
+      (animal) => animal.speciesId === "vulpes_vulpes"
+    );
+
     const dog = founders.find(
       (animal) => animal.speciesId === "canis_lupus_familiaris"
     );
 
     const wolfDog =
-      wolf && dog ? resolveCompatibility(wolf, dog, species) : null;
+      wolf && dog
+        ? resolveCompatibility(wolf, dog, species)
+        : null;
 
     const wolfCoyote =
-      wolf && coyote ? resolveCompatibility(wolf, coyote, species) : null;
+      wolf && coyote
+        ? resolveCompatibility(wolf, coyote, species)
+        : null;
 
     const wolfFox =
-      wolf && fox ? resolveCompatibility(wolf, fox, species) : null;
+      wolf && fox
+        ? resolveCompatibility(wolf, fox, species)
+        : null;
 
     const wolfDogLineage =
-      wolf && dog ? resolveLineage(wolf, dog) : null;
+      wolf && dog
+        ? resolveLineage(wolf, dog)
+        : null;
 
     const wolfCoyoteLineage =
-      wolf && coyote ? resolveLineage(wolf, coyote) : null;
+      wolf && coyote
+        ? resolveLineage(wolf, coyote)
+        : null;
 
     const wolfFoxLineage =
-      wolf && fox ? resolveLineage(wolf, fox) : null;
+      wolf && fox
+        ? resolveLineage(wolf, fox)
+        : null;
 
     const wolfDogOffspring =
-      wolf && dog && wolfDog ? createOffspring(wolf, dog, wolfDog) : null;
+      wolf && dog && wolfDog
+        ? createOffspring(
+            wolf,
+            dog,
+            wolfDog,
+            mutations
+          )
+        : null;
 
     const wolfCoyoteOffspring =
       wolf && coyote && wolfCoyote
-        ? createOffspring(wolf, coyote, wolfCoyote)
+        ? createOffspring(
+            wolf,
+            coyote,
+            wolfCoyote,
+            mutations
+          )
         : null;
 
     const wolfFoxOffspring =
-      wolf && fox && wolfFox ? createOffspring(wolf, fox, wolfFox) : null;
+      wolf && fox && wolfFox
+        ? createOffspring(
+            wolf,
+            fox,
+            wolfFox,
+            mutations
+          )
+        : null;
 
     app.innerHTML = `
       <h1>Canidae: Lineages</h1>
-      <h2>Phase 2A - Sprint 5 Offspring Generator</h2>
+      <h2>Phase 2A - Sprint 6 Mutation Engine</h2>
 
-      <section>
-        <p><strong>Species Loaded:</strong> ${species.canids?.length ?? "Unknown"}</p>
-        <p><strong>Trait Library:</strong> Loaded</p>
-        <p><strong>Breeding Rules:</strong> Loaded</p>
-        <p><strong>Mutation Catalog:</strong> ${
-          mutations.mutations?.length ?? "Unknown"
-        } mutations loaded</p>
-      </section>
+      <p><strong>Species:</strong> ${
+        species.canids?.length ?? 0
+      }</p>
 
-      <section>
-        <h3>Founder Animals</h3>
-        <ul>
-          ${founders
-            .map(
-              (animal) => `
-                <li>
-                  <strong>${animal.name}</strong><br />
-                  Species ID: ${animal.speciesId}<br />
-                  Generation: ${animal.generation}<br />
-                  Fertility: ${animal.stats.fertility}<br />
-                  Stability: ${animal.stats.stability}<br />
-                  Lineage: ${JSON.stringify(animal.genome.L)}
-                </li>
-              `
-            )
-            .join("")}
-        </ul>
-      </section>
+      <p><strong>Mutations:</strong> ${
+        mutations.mutations?.length ?? 0
+      }</p>
 
-      <section>
-        <h3>Compatibility Tests</h3>
+      <hr>
 
-        <h4>Wolf × Dog</h4>
-        <pre>${JSON.stringify(wolfDog, null, 2)}</pre>
+      <h3>Wolf × Dog</h3>
+      <pre>${JSON.stringify(
+        wolfDogOffspring,
+        null,
+        2
+      )}</pre>
 
-        <h4>Wolf × Coyote</h4>
-        <pre>${JSON.stringify(wolfCoyote, null, 2)}</pre>
+      <h3>Wolf × Coyote</h3>
+      <pre>${JSON.stringify(
+        wolfCoyoteOffspring,
+        null,
+        2
+      )}</pre>
 
-        <h4>Wolf × Red Fox</h4>
-        <pre>${JSON.stringify(wolfFox, null, 2)}</pre>
-      </section>
-
-      <section>
-        <h3>Lineage Tests</h3>
-
-        <h4>Wolf × Dog</h4>
-        <pre>${JSON.stringify(wolfDogLineage, null, 2)}</pre>
-
-        <h4>Wolf × Coyote</h4>
-        <pre>${JSON.stringify(wolfCoyoteLineage, null, 2)}</pre>
-
-        <h4>Wolf × Red Fox</h4>
-        <pre>${JSON.stringify(wolfFoxLineage, null, 2)}</pre>
-      </section>
-
-      <section>
-        <h3>Offspring Tests</h3>
-
-        <h4>Wolf × Dog Offspring</h4>
-        <pre>${JSON.stringify(wolfDogOffspring, null, 2)}</pre>
-
-        <h4>Wolf × Coyote Offspring</h4>
-        <pre>${JSON.stringify(wolfCoyoteOffspring, null, 2)}</pre>
-
-        <h4>Wolf × Red Fox Sandbox Offspring</h4>
-        <pre>${JSON.stringify(wolfFoxOffspring, null, 2)}</pre>
-      </section>
+      <h3>Wolf × Red Fox</h3>
+      <pre>${JSON.stringify(
+        wolfFoxOffspring,
+        null,
+        2
+      )}</pre>
     `;
-
-    console.log({
-      species,
-      traits,
-      breedingRules,
-      mutations,
-      founders,
-      wolfDog,
-      wolfCoyote,
-      wolfFox,
-      wolfDogLineage,
-      wolfCoyoteLineage,
-      wolfFoxLineage,
-      wolfDogOffspring,
-      wolfCoyoteOffspring,
-      wolfFoxOffspring,
-    });
   } catch (error) {
-    app.innerHTML = `
-      <h1>Canidae: Lineages</h1>
-      <h2>Error</h2>
+    document.body.innerHTML = `
+      <h1>Error</h1>
       <pre>${String(error)}</pre>
     `;
 
