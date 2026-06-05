@@ -1,3 +1,5 @@
+export type TraitValue = string | number | boolean | string[];
+
 export interface Animal {
   id: string;
   name: string;
@@ -10,6 +12,8 @@ export interface Animal {
     M: string[];
     L: Record<string, number>;
   };
+
+  phenotype: Record<string, TraitValue>;
 
   stats: {
     fertility: number;

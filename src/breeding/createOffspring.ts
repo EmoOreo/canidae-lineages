@@ -11,8 +11,7 @@ export function createOffspring(
 ): Animal {
   const lineage = resolveLineage(parentA, parentB);
 
-  const generation =
-    Math.max(parentA.generation, parentB.generation) + 1;
+  const generation = Math.max(parentA.generation, parentB.generation) + 1;
 
   const averageFertility =
     (parentA.stats.fertility + parentB.stats.fertility) / 2;
@@ -29,11 +28,7 @@ export function createOffspring(
     ) / 100;
 
   const stability =
-    Math.round(
-      averageStability *
-        compatibility.compatibility *
-        100
-    ) / 100;
+    Math.round(averageStability * compatibility.compatibility * 100) / 100;
 
   const mutation = resolveMutation(
     compatibility.compatibility,
@@ -45,17 +40,16 @@ export function createOffspring(
     id: `offspring_${Date.now()}`,
     name: `${compatibility.label} G${generation}`,
     speciesId: "hybrid",
-
     generation,
 
     genome: {
       D: [],
       R: [],
-      M: mutation.mutationApplied
-        ? [mutation.mutationId!]
-        : [],
+      M: mutation.mutationApplied ? [mutation.mutationId!] : [],
       L: lineage,
     },
+
+    phenotype: {},
 
     stats: {
       fertility,
