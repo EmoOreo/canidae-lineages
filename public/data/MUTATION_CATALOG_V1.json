@@ -1,0 +1,696 @@
+{
+  "version": "1.0.0",
+  "notes": "Canid mutation library for breeding simulation. Rarity is gameplay-tuned. stat_modifiers use additive normalized values unless otherwise stated.",
+  "mutations": [
+    {
+      "id": "mut_coat_melanism",
+      "name": "Melanism",
+      "category": "Coat",
+      "rarity": "common",
+      "inheritance_behavior": "dominant_visible",
+      "stat_modifiers": {
+        "appearance": 0.15
+      },
+      "stability_modifier": 0.02,
+      "fertility_modifier": 0.0,
+      "description": "Darkened coat caused by elevated melanin expression; common in wolves and foxes."
+    },
+    {
+      "id": "mut_coat_leucism",
+      "name": "Leucism",
+      "category": "Coat",
+      "rarity": "uncommon",
+      "inheritance_behavior": "recessive_carrier",
+      "stat_modifiers": {
+        "appearance": 0.1
+      },
+      "stability_modifier": -0.02,
+      "fertility_modifier": -0.01,
+      "description": "Partial loss of pigmentation producing pale or patchy coats, usually with normal eye pigment."
+    },
+    {
+      "id": "mut_coat_albinism",
+      "name": "Albinism",
+      "category": "Coat",
+      "rarity": "rare",
+      "inheritance_behavior": "recessive_visible",
+      "stat_modifiers": {
+        "health": -0.05,
+        "appearance": 0.2
+      },
+      "stability_modifier": -0.05,
+      "fertility_modifier": -0.03,
+      "description": "Near-complete loss of melanin with pale coat and light eyes; useful as a rare visual mutation."
+    },
+    {
+      "id": "mut_coat_dilution",
+      "name": "Dilution",
+      "category": "Coat",
+      "rarity": "uncommon",
+      "inheritance_behavior": "recessive_visible",
+      "stat_modifiers": {
+        "appearance": 0.08
+      },
+      "stability_modifier": -0.01,
+      "fertility_modifier": 0.0,
+      "description": "Softens or lightens coat colors, creating blue-gray, cream, or washed tones."
+    },
+    {
+      "id": "mut_coat_brindle_plus",
+      "name": "Enhanced Brindle",
+      "category": "Coat",
+      "rarity": "uncommon",
+      "inheritance_behavior": "dominant_visible",
+      "stat_modifiers": {
+        "appearance": 0.07
+      },
+      "stability_modifier": 0.0,
+      "fertility_modifier": 0.0,
+      "description": "Strengthened brindle striping suitable for wolfdog and jackal hybrids."
+    },
+    {
+      "id": "mut_coat_merle",
+      "name": "Merle Pattern",
+      "category": "Coat",
+      "rarity": "rare",
+      "inheritance_behavior": "dominant_visible",
+      "stat_modifiers": {
+        "appearance": 0.1
+      },
+      "stability_modifier": -0.03,
+      "fertility_modifier": -0.04,
+      "description": "Patchy marbling pattern that may create striking coats but can carry health concerns if overstacked."
+    },
+    {
+      "id": "mut_coat_piebald",
+      "name": "Piebald",
+      "category": "Coat",
+      "rarity": "uncommon",
+      "inheritance_behavior": "recessive_visible",
+      "stat_modifiers": {
+        "appearance": 0.1
+      },
+      "stability_modifier": -0.01,
+      "fertility_modifier": 0.0,
+      "description": "Large white patches with colored sections; common in domesticated lineages."
+    },
+    {
+      "id": "mut_coat_sable",
+      "name": "Deep Sable",
+      "category": "Coat",
+      "rarity": "common",
+      "inheritance_behavior": "dominant_visible",
+      "stat_modifiers": {
+        "appearance": 0.05
+      },
+      "stability_modifier": 0.0,
+      "fertility_modifier": 0.0,
+      "description": "Rich dark-tipped coat shading common in wolves and dogs."
+    },
+    {
+      "id": "mut_coat_cream",
+      "name": "Cream Wash",
+      "category": "Coat",
+      "rarity": "common",
+      "inheritance_behavior": "dominant_visible",
+      "stat_modifiers": {
+        "appearance": 0.04
+      },
+      "stability_modifier": 0.0,
+      "fertility_modifier": 0.0,
+      "description": "Pale cream coat tone often seen in domestic dogs and desert canids."
+    },
+    {
+      "id": "mut_coat_black_mask",
+      "name": "Black Mask",
+      "category": "Coat",
+      "rarity": "common",
+      "inheritance_behavior": "dominant_visible",
+      "stat_modifiers": {
+        "appearance": 0.05
+      },
+      "stability_modifier": 0.0,
+      "fertility_modifier": 0.0,
+      "description": "Facial dark mask common in jackal-like canids and many domestic breeds."
+    },
+    {
+      "id": "mut_body_giantism",
+      "name": "Giantism",
+      "category": "Body",
+      "rarity": "rare",
+      "inheritance_behavior": "mutational",
+      "stat_modifiers": {
+        "body_mass": 0.3,
+        "endurance": -0.05
+      },
+      "stability_modifier": -0.04,
+      "fertility_modifier": -0.05,
+      "description": "Unusually large body size relative to lineage expectations."
+    },
+    {
+      "id": "mut_body_dwarfism",
+      "name": "Dwarfism",
+      "category": "Body",
+      "rarity": "rare",
+      "inheritance_behavior": "mutational",
+      "stat_modifiers": {
+        "body_mass": -0.3,
+        "endurance": 0.05
+      },
+      "stability_modifier": -0.04,
+      "fertility_modifier": -0.05,
+      "description": "Reduced body size and proportional shortening; useful for miniature experimental lines."
+    },
+    {
+      "id": "mut_body_long_legs",
+      "name": "Long-Legged Morph",
+      "category": "Body",
+      "rarity": "uncommon",
+      "inheritance_behavior": "dominant_visible",
+      "stat_modifiers": {
+        "endurance": 0.08,
+        "speed": 0.08
+      },
+      "stability_modifier": 0.01,
+      "fertility_modifier": 0.0,
+      "description": "Extended limbs and taller stance, evoking maned wolf or slim chase-adapted morphs."
+    },
+    {
+      "id": "mut_body_stocky",
+      "name": "Stocky Build",
+      "category": "Body",
+      "rarity": "common",
+      "inheritance_behavior": "dominant_visible",
+      "stat_modifiers": {
+        "endurance": -0.04,
+        "bite_force": 0.06
+      },
+      "stability_modifier": 0.0,
+      "fertility_modifier": 0.0,
+      "description": "Heavier torso and shorter overall proportions, often seen in bone-crushing or arctic-adapted lines."
+    },
+    {
+      "id": "mut_body_short_muzzle",
+      "name": "Short Muzzle",
+      "category": "Body",
+      "rarity": "rare",
+      "inheritance_behavior": "recessive_visible",
+      "stat_modifiers": {
+        "bite_force": 0.05,
+        "smell": -0.03
+      },
+      "stability_modifier": -0.01,
+      "fertility_modifier": 0.0,
+      "description": "Reduced muzzle length creating a compact facial profile."
+    },
+    {
+      "id": "mut_body_elongated_muzzle",
+      "name": "Elongated Muzzle",
+      "category": "Body",
+      "rarity": "common",
+      "inheritance_behavior": "dominant_visible",
+      "stat_modifiers": {
+        "smell": 0.08
+      },
+      "stability_modifier": 0.0,
+      "fertility_modifier": 0.0,
+      "description": "Longer facial structure supporting scent tracking and classic wolf/fox silhouettes."
+    },
+    {
+      "id": "mut_skull_broadening",
+      "name": "Skull Broadening",
+      "category": "Skull",
+      "rarity": "rare",
+      "inheritance_behavior": "dominant_visible",
+      "stat_modifiers": {
+        "bite_force": 0.1
+      },
+      "stability_modifier": 0.01,
+      "fertility_modifier": 0.0,
+      "description": "Wider cranium with increased jaw leverage, suited to robust predators."
+    },
+    {
+      "id": "mut_skull_crusher_jaw",
+      "name": "Crusher Jaw",
+      "category": "Skull",
+      "rarity": "very_rare",
+      "inheritance_behavior": "mutational",
+      "stat_modifiers": {
+        "bite_force": 0.18,
+        "health": -0.03
+      },
+      "stability_modifier": -0.05,
+      "fertility_modifier": -0.04,
+      "description": "Extreme jaw and skull adaptation resembling bone-crushing extinct canids."
+    },
+    {
+      "id": "mut_skull_domed_crest",
+      "name": "Domed Crest",
+      "category": "Skull",
+      "rarity": "rare",
+      "inheritance_behavior": "recessive_visible",
+      "stat_modifiers": {
+        "appearance": 0.06
+      },
+      "stability_modifier": 0.0,
+      "fertility_modifier": 0.0,
+      "description": "Raised cranial dome or crest producing an ancestral-looking silhouette."
+    },
+    {
+      "id": "mut_ears_gigantic",
+      "name": "Gigantic Ears",
+      "category": "Ears",
+      "rarity": "common",
+      "inheritance_behavior": "dominant_visible",
+      "stat_modifiers": {
+        "heat_tolerance": 0.1,
+        "hearing": 0.1
+      },
+      "stability_modifier": 0.0,
+      "fertility_modifier": 0.0,
+      "description": "Oversized ears for thermoregulation and sound localization; ideal for desert foxes."
+    },
+    {
+      "id": "mut_ears_round",
+      "name": "Rounded Ears",
+      "category": "Ears",
+      "rarity": "common",
+      "inheritance_behavior": "dominant_visible",
+      "stat_modifiers": {
+        "heat_loss": 0.02
+      },
+      "stability_modifier": 0.0,
+      "fertility_modifier": 0.0,
+      "description": "Smaller rounded ears common in arctic and compact canids."
+    },
+    {
+      "id": "mut_ears_floppy",
+      "name": "Floppy Ears",
+      "category": "Ears",
+      "rarity": "common",
+      "inheritance_behavior": "dominant_visible",
+      "stat_modifiers": {
+        "trainability": 0.04
+      },
+      "stability_modifier": 0.0,
+      "fertility_modifier": 0.0,
+      "description": "Downward ear carriage often associated with domestication in dog-like lines."
+    },
+    {
+      "id": "mut_ears_semi_erect",
+      "name": "Semi-Erect Ears",
+      "category": "Ears",
+      "rarity": "common",
+      "inheritance_behavior": "blended",
+      "stat_modifiers": {
+        "hearing": 0.03
+      },
+      "stability_modifier": 0.0,
+      "fertility_modifier": 0.0,
+      "description": "Intermediate ear carriage useful for crossbred lineages."
+    },
+    {
+      "id": "mut_tail_bushy",
+      "name": "Extra Bushy Tail",
+      "category": "Tail",
+      "rarity": "common",
+      "inheritance_behavior": "dominant_visible",
+      "stat_modifiers": {
+        "appearance": 0.04,
+        "cold_tolerance": 0.03
+      },
+      "stability_modifier": 0.0,
+      "fertility_modifier": 0.0,
+      "description": "Plush tail fur improves visual appeal and cold handling."
+    },
+    {
+      "id": "mut_tail_bobtail",
+      "name": "Bobtail",
+      "category": "Tail",
+      "rarity": "rare",
+      "inheritance_behavior": "recessive_visible",
+      "stat_modifiers": {
+        "appearance": 0.03
+      },
+      "stability_modifier": -0.01,
+      "fertility_modifier": 0.0,
+      "description": "Shortened tail, often a cosmetic novelty in breeding games."
+    },
+    {
+      "id": "mut_tail_curled",
+      "name": "Curled Tail",
+      "category": "Tail",
+      "rarity": "common",
+      "inheritance_behavior": "dominant_visible",
+      "stat_modifiers": {
+        "appearance": 0.03
+      },
+      "stability_modifier": 0.0,
+      "fertility_modifier": 0.0,
+      "description": "Tail curls over the back or in a loose hook, common in domesticated lineages."
+    },
+    {
+      "id": "mut_behavior_hyper_social",
+      "name": "Hyper-Social",
+      "category": "Behavior",
+      "rarity": "uncommon",
+      "inheritance_behavior": "dominant_visible",
+      "stat_modifiers": {
+        "temperament": 0.1,
+        "trainability": 0.06
+      },
+      "stability_modifier": 0.01,
+      "fertility_modifier": 0.0,
+      "description": "Unusually strong social tolerance and pack affinity."
+    },
+    {
+      "id": "mut_behavior_solo_bonded",
+      "name": "Solo-Bonded",
+      "category": "Behavior",
+      "rarity": "common",
+      "inheritance_behavior": "dominant_visible",
+      "stat_modifiers": {
+        "temperament": -0.04,
+        "trainability": 0.02
+      },
+      "stability_modifier": 0.0,
+      "fertility_modifier": 0.0,
+      "description": "Prefers single-handler bonding and reduced group sociality."
+    },
+    {
+      "id": "mut_behavior_extreme_shyness",
+      "name": "Extreme Shyness",
+      "category": "Behavior",
+      "rarity": "rare",
+      "inheritance_behavior": "mutational",
+      "stat_modifiers": {
+        "temperament": -0.15,
+        "trainability": -0.08
+      },
+      "stability_modifier": -0.02,
+      "fertility_modifier": 0.0,
+      "description": "Anxiety-prone temperament; may be difficult to manage but useful for niche lines."
+    },
+    {
+      "id": "mut_behavior_fearless",
+      "name": "Fearless",
+      "category": "Behavior",
+      "rarity": "rare",
+      "inheritance_behavior": "mutational",
+      "stat_modifiers": {
+        "prey_drive": 0.1,
+        "temperament": -0.05
+      },
+      "stability_modifier": 0.0,
+      "fertility_modifier": 0.0,
+      "description": "Bold and risk-tolerant temperament common in high-drive hunters."
+    },
+    {
+      "id": "mut_health_hardiness",
+      "name": "Hardiness",
+      "category": "Health",
+      "rarity": "common",
+      "inheritance_behavior": "dominant_visible",
+      "stat_modifiers": {
+        "health": 0.1,
+        "stability": 0.03
+      },
+      "stability_modifier": 0.03,
+      "fertility_modifier": 0.01,
+      "description": "General health resilience and lower susceptibility to kennel stress."
+    },
+    {
+      "id": "mut_health_low_immunity",
+      "name": "Low Immunity",
+      "category": "Health",
+      "rarity": "rare",
+      "inheritance_behavior": "recessive_visible",
+      "stat_modifiers": {
+        "health": -0.12
+      },
+      "stability_modifier": -0.03,
+      "fertility_modifier": -0.02,
+      "description": "Compromised immune system increasing disease risk and reducing viability."
+    },
+    {
+      "id": "mut_health_hybrid_vigor",
+      "name": "Hybrid Vigor",
+      "category": "Hybrid Traits",
+      "rarity": "rare",
+      "inheritance_behavior": "crossline_bonus",
+      "stat_modifiers": {
+        "health": 0.12,
+        "fertility": 0.08,
+        "stability": 0.06
+      },
+      "stability_modifier": 0.06,
+      "fertility_modifier": 0.08,
+      "description": "Heterosis-like bonus from compatible mixed ancestry; strongest in close Canis crosses."
+    },
+    {
+      "id": "mut_hybrid_instability",
+      "name": "Hybrid Instability",
+      "category": "Hybrid Traits",
+      "rarity": "common",
+      "inheritance_behavior": "crossline_penalty",
+      "stat_modifiers": {
+        "health": -0.1,
+        "fertility": -0.12
+      },
+      "stability_modifier": -0.12,
+      "fertility_modifier": -0.1,
+      "description": "Common penalty in distant or sandbox-only pairings; indicates developmental noise."
+    },
+    {
+      "id": "mut_hybrid_sterility",
+      "name": "Hybrid Sterility",
+      "category": "Hybrid Traits",
+      "rarity": "very_rare",
+      "inheritance_behavior": "lockout",
+      "stat_modifiers": {
+        "fertility": -0.5
+      },
+      "stability_modifier": -0.2,
+      "fertility_modifier": -0.4,
+      "description": "Offspring may be unable to reproduce. Useful as a hard endpoint for extreme crosses."
+    },
+    {
+      "id": "mut_hybrid_trait_mosaic",
+      "name": "Trait Mosaic",
+      "category": "Hybrid Traits",
+      "rarity": "rare",
+      "inheritance_behavior": "mixed_expression",
+      "stat_modifiers": {
+        "appearance": 0.08
+      },
+      "stability_modifier": -0.02,
+      "fertility_modifier": 0.0,
+      "description": "Patchwork expression of lineage traits that produces highly individualized hybrids."
+    },
+    {
+      "id": "mut_hybrid_adaptive_blend",
+      "name": "Adaptive Blend",
+      "category": "Hybrid Traits",
+      "rarity": "uncommon",
+      "inheritance_behavior": "crossline_bonus",
+      "stat_modifiers": {
+        "endurance": 0.05,
+        "trainability": 0.03
+      },
+      "stability_modifier": 0.02,
+      "fertility_modifier": 0.02,
+      "description": "Balanced hybrid with slightly improved adaptation to mixed habitats."
+    },
+    {
+      "id": "mut_ancient_trait_reversion",
+      "name": "Ancient Trait Reversion",
+      "category": "Ancient Traits",
+      "rarity": "very_rare",
+      "inheritance_behavior": "ancestral_recall",
+      "stat_modifiers": {
+        "appearance": 0.1,
+        "stability": -0.03
+      },
+      "stability_modifier": -0.03,
+      "fertility_modifier": -0.02,
+      "description": "Reappearance of a deep ancestral feature from extinct canid lineages."
+    },
+    {
+      "id": "mut_ancient_bone_crusher",
+      "name": "Bone Crusher Heritage",
+      "category": "Ancient Traits",
+      "rarity": "very_rare",
+      "inheritance_behavior": "ancestral_recall",
+      "stat_modifiers": {
+        "bite_force": 0.15,
+        "skull_robustness": 0.15
+      },
+      "stability_modifier": -0.04,
+      "fertility_modifier": -0.03,
+      "description": "Borrowed ancient trait pattern that increases skull and jaw robustness."
+    },
+    {
+      "id": "mut_ancient_paleofur",
+      "name": "Paleofur Texture",
+      "category": "Ancient Traits",
+      "rarity": "rare",
+      "inheritance_behavior": "ancestral_recall",
+      "stat_modifiers": {
+        "appearance": 0.05
+      },
+      "stability_modifier": -0.01,
+      "fertility_modifier": 0.0,
+      "description": "A rough, historic-looking coat texture that suggests extinct lineage expression."
+    },
+    {
+      "id": "mut_extreme_massive_frame",
+      "name": "Massive Frame",
+      "category": "Extreme Traits",
+      "rarity": "very_rare",
+      "inheritance_behavior": "mutational",
+      "stat_modifiers": {
+        "body_mass": 0.4,
+        "endurance": -0.1
+      },
+      "stability_modifier": -0.06,
+      "fertility_modifier": -0.05,
+      "description": "Enormously oversized build for stress-test and sandbox breeding scenarios."
+    },
+    {
+      "id": "mut_extreme_tiny_frame",
+      "name": "Tiny Frame",
+      "category": "Extreme Traits",
+      "rarity": "very_rare",
+      "inheritance_behavior": "mutational",
+      "stat_modifiers": {
+        "body_mass": -0.4,
+        "fertility": -0.03
+      },
+      "stability_modifier": -0.06,
+      "fertility_modifier": -0.04,
+      "description": "Extremely compact body plan; good for novelty lines and small-dog aesthetics."
+    },
+    {
+      "id": "mut_extreme_sprint_chassis",
+      "name": "Sprint Chassis",
+      "category": "Extreme Traits",
+      "rarity": "rare",
+      "inheritance_behavior": "dominant_visible",
+      "stat_modifiers": {
+        "speed": 0.15,
+        "endurance": -0.03
+      },
+      "stability_modifier": 0.0,
+      "fertility_modifier": 0.0,
+      "description": "Race-build body optimized for burst speed and chase gameplay."
+    },
+    {
+      "id": "mut_extreme_arctic_plush",
+      "name": "Arctic Plush Coat",
+      "category": "Extreme Traits",
+      "rarity": "rare",
+      "inheritance_behavior": "dominant_visible",
+      "stat_modifiers": {
+        "cold_tolerance": 0.15,
+        "appearance": 0.06
+      },
+      "stability_modifier": 0.01,
+      "fertility_modifier": 0.0,
+      "description": "Exceptionally dense winter coat suited to polar and subpolar environments."
+    },
+    {
+      "id": "mut_extreme_desert_ears",
+      "name": "Desert Ear Expansion",
+      "category": "Extreme Traits",
+      "rarity": "rare",
+      "inheritance_behavior": "dominant_visible",
+      "stat_modifiers": {
+        "heat_tolerance": 0.15,
+        "hearing": 0.08
+      },
+      "stability_modifier": 0.01,
+      "fertility_modifier": 0.0,
+      "description": "Oversized ear phenotype for extreme desert adaptation."
+    },
+    {
+      "id": "mut_extreme_shadow_markings",
+      "name": "Shadow Markings",
+      "category": "Extreme Traits",
+      "rarity": "rare",
+      "inheritance_behavior": "dominant_visible",
+      "stat_modifiers": {
+        "appearance": 0.09
+      },
+      "stability_modifier": 0.0,
+      "fertility_modifier": 0.0,
+      "description": "High-contrast dark markings that create a dramatic outline in the kennel viewer."
+    },
+    {
+      "id": "mut_extreme_warbark",
+      "name": "Warbark Vocalization",
+      "category": "Extreme Traits",
+      "rarity": "very_rare",
+      "inheritance_behavior": "dominant_visible",
+      "stat_modifiers": {
+        "temperament": -0.03,
+        "prey_drive": 0.08
+      },
+      "stability_modifier": -0.01,
+      "fertility_modifier": 0.0,
+      "description": "Aggressive bark-howl hybrid useful for experimental behavioral lines."
+    },
+    {
+      "id": "mut_extreme_goldrush_fertility",
+      "name": "Hyper Fertility",
+      "category": "Fertility",
+      "rarity": "very_rare",
+      "inheritance_behavior": "dominant_visible",
+      "stat_modifiers": {
+        "fertility": 0.25,
+        "litter_size": 0.2
+      },
+      "stability_modifier": -0.02,
+      "fertility_modifier": 0.2,
+      "description": "Extremely prolific line trait that increases reproductive output at a slight stability cost."
+    },
+    {
+      "id": "mut_extreme_low_fertility",
+      "name": "Hypofertility",
+      "category": "Fertility",
+      "rarity": "common",
+      "inheritance_behavior": "dominant_visible",
+      "stat_modifiers": {
+        "fertility": -0.2
+      },
+      "stability_modifier": -0.01,
+      "fertility_modifier": -0.2,
+      "description": "Reduced reproductive output; common in unstable hybrids and ancient crosses."
+    },
+    {
+      "id": "mut_fertility_litter_boost",
+      "name": "Litter Boost",
+      "category": "Fertility",
+      "rarity": "common",
+      "inheritance_behavior": "dominant_visible",
+      "stat_modifiers": {
+        "litter_size": 0.3
+      },
+      "stability_modifier": 0.0,
+      "fertility_modifier": 0.05,
+      "description": "Improves average litter size without substantially altering viability."
+    },
+    {
+      "id": "mut_fertility_singleton_bias",
+      "name": "Singleton Bias",
+      "category": "Fertility",
+      "rarity": "uncommon",
+      "inheritance_behavior": "recessive_visible",
+      "stat_modifiers": {
+        "litter_size": -0.3
+      },
+      "stability_modifier": 0.0,
+      "fertility_modifier": -0.05,
+      "description": "Skews pregnancies toward very small litters or single offspring."
+    }
+  ]
+}
