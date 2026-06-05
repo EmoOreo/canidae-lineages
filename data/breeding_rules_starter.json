@@ -1,0 +1,432 @@
+{
+  "version": "0.1.0",
+  "notes": "All scores are gameplay-tuned. REALISTIC mode enforces biological plausibility. SANDBOX mode allows all pairings with instability penalties applied.",
+  "compatibilityGroups": {
+    "description": "Define which groups can pair. Used by both modes. Distance determines penalty severity.",
+    "groups": {
+      "Canis": [
+        "canis_lupus_familiaris",
+        "canis_lupus",
+        "canis_latrans",
+        "canis_aureus"
+      ],
+      "Vulpes": [
+        "vulpes_vulpes",
+        "vulpes_lagopus",
+        "vulpes_zerda"
+      ],
+      "Vulpes_small": [
+        "vulpes_zerda"
+      ],
+      "SouthAmerican_Canini": [
+        "chrysocyon_brachyurus"
+      ],
+      "Lycaon": [
+        "lycaon_pictus"
+      ],
+      "Cuon": [
+        "cuon_alpinus"
+      ],
+      "Aenocyon": [
+        "aenocyon_dirus"
+      ],
+      "Borophaginae": [
+        "borophagus_diversidens"
+      ]
+    }
+  },
+  "pairingTiers": {
+    "description": "Tier determines base compatibility score, fertility penalty, sterile offspring chance, and hybrid instability. Lower tier = more distant pairing.",
+    "tiers": [
+      {
+        "id": "tier_1_same_subspecies",
+        "label": "Same Subspecies / Same Breed",
+        "condition": "identical species + subspecies/breed",
+        "realisticAllowed": true,
+        "sandboxAllowed": true,
+        "baseCompatibilityScore": 1.0,
+        "fertilityPenalty": 0.0,
+        "sterileOffspringChance": 0.0,
+        "hybridInstability": 0.0,
+        "mutationChance": 0.01,
+        "inbreedingRisk": "computed_from_pedigree",
+        "offspringFertility": 1.0,
+        "hybridNameRule": "use_parent_species_name"
+      },
+      {
+        "id": "tier_2_same_species",
+        "label": "Same Species (Different Subspecies)",
+        "condition": "same species, different subspecies",
+        "realisticAllowed": true,
+        "sandboxAllowed": true,
+        "baseCompatibilityScore": 0.95,
+        "fertilityPenalty": 0.0,
+        "sterileOffspringChance": 0.0,
+        "hybridInstability": 0.02,
+        "mutationChance": 0.02,
+        "inbreedingRisk": "low",
+        "offspringFertility": 0.98,
+        "hybridNameRule": "use_parent_species_name_with_note"
+      },
+      {
+        "id": "tier_3_same_genus",
+        "label": "Same Genus (Different Species)",
+        "condition": "same genus, different species (e.g. Canis lupus x Canis latrans)",
+        "examples": [
+          "gray_wolf x coyote",
+          "gray_wolf x domestic_dog",
+          "coyote x domestic_dog"
+        ],
+        "realisticAllowed": true,
+        "sandboxAllowed": true,
+        "baseCompatibilityScore": 0.8,
+        "fertilityPenalty": 0.1,
+        "sterileOffspringChance": 0.05,
+        "hybridInstability": 0.1,
+        "mutationChance": 0.04,
+        "inbreedingRisk": "none",
+        "offspringFertility": 0.75,
+        "hybridNameRule": "portmanteau_or_hybrid_prefix",
+        "hybridNamingTemplate": "{parent1_common}-{parent2_common} hybrid",
+        "notes": "Coywolf, coydogs, wolfdogs are established natural/documented hybrids."
+      },
+      {
+        "id": "tier_4_same_tribe_diff_genus",
+        "label": "Same Tribe, Different Genus",
+        "condition": "same tribe (Canini or Vulpini), different genus",
+        "examples": [
+          "canis x lycaon",
+          "canis x cuon",
+          "vulpes_vulpes x vulpes_zerda"
+        ],
+        "realisticAllowed": false,
+        "sandboxAllowed": true,
+        "baseCompatibilityScore": 0.4,
+        "fertilityPenalty": 0.4,
+        "sterileOffspringChance": 0.35,
+        "hybridInstability": 0.4,
+        "mutationChance": 0.08,
+        "inbreedingRisk": "none",
+        "offspringFertility": 0.3,
+        "hybridNameRule": "experimental_lineage_prefix",
+        "hybridNamingTemplate": "EXP-{parent1_genus_abbr}{parent2_genus_abbr} [{generation}]",
+        "notes": "No documented natural hybrids. Sandbox-only. High instability. Offspring unlikely to reproduce."
+      },
+      {
+        "id": "tier_5_same_subfamily_diff_tribe",
+        "label": "Same Subfamily (Caninae), Different Tribe",
+        "condition": "same subfamily Caninae, different tribe (Canini x Vulpini)",
+        "examples": [
+          "gray_wolf x red_fox",
+          "domestic_dog x maned_wolf"
+        ],
+        "realisticAllowed": false,
+        "sandboxAllowed": true,
+        "baseCompatibilityScore": 0.15,
+        "fertilityPenalty": 0.7,
+        "sterileOffspringChance": 0.7,
+        "hybridInstability": 0.65,
+        "mutationChance": 0.15,
+        "inbreedingRisk": "none",
+        "offspringFertility": 0.1,
+        "hybridNameRule": "chimera_lineage_naming",
+        "hybridNamingTemplate": "CHIMERA-{parent1_id_abbr}+{parent2_id_abbr} [{generation}]",
+        "notes": "Biologically implausible. Purely sandbox fantasy. Heavy instability and near-zero fertility on offspring."
+      },
+      {
+        "id": "tier_6_extinct_caninae_x_extant",
+        "label": "Extinct Caninae x Extant Caninae",
+        "condition": "one parent is extinct Caninae species (e.g. Aenocyon dirus)",
+        "examples": [
+          "dire_wolf x gray_wolf",
+          "dire_wolf x domestic_dog"
+        ],
+        "realisticAllowed": false,
+        "sandboxAllowed": true,
+        "baseCompatibilityScore": 0.3,
+        "fertilityPenalty": 0.5,
+        "sterileOffspringChance": 0.45,
+        "hybridInstability": 0.55,
+        "mutationChance": 0.12,
+        "inbreedingRisk": "none",
+        "offspringFertility": 0.25,
+        "dnaCompletenessRequired": 0.6,
+        "hybridNameRule": "revival_lineage_prefix",
+        "hybridNamingTemplate": "REVIVAL-{extinct_id}-Gen{generation}",
+        "notes": "Requires DNA reconstruction research. Instability and fertility improve as dna_completeness approaches 1.0."
+      },
+      {
+        "id": "tier_7_borophaginae_x_any",
+        "label": "Borophaginae x Any (Deepest Extinct Cross)",
+        "condition": "one parent is Borophaginae (e.g. Borophagus)",
+        "examples": [
+          "borophagus x gray_wolf",
+          "borophagus x domestic_dog"
+        ],
+        "realisticAllowed": false,
+        "sandboxAllowed": true,
+        "baseCompatibilityScore": 0.05,
+        "fertilityPenalty": 0.9,
+        "sterileOffspringChance": 0.9,
+        "hybridInstability": 0.9,
+        "mutationChance": 0.3,
+        "inbreedingRisk": "none",
+        "offspringFertility": 0.05,
+        "dnaCompletenessRequired": 0.8,
+        "hybridNameRule": "ancient_lineage_prefix",
+        "hybridNamingTemplate": "ANCIENT-{borophaginae_abbr}+{extant_abbr} [{generation}]",
+        "notes": "Subfamilies diverged ~10 Mya. Maximum instability. Offspring are highly mutable and almost always sterile without advanced genetic stabilization research."
+      }
+    ]
+  },
+  "fertilityPenaltyRules": {
+    "description": "Stacking penalties applied to base fertility. Multiplicative.",
+    "penalties": [
+      {
+        "id": "fp_inbreed_mild",
+        "condition": "inbreeding_coefficient >= 0.125",
+        "multiplier": 0.85
+      },
+      {
+        "id": "fp_inbreed_moderate",
+        "condition": "inbreeding_coefficient >= 0.25",
+        "multiplier": 0.65
+      },
+      {
+        "id": "fp_inbreed_severe",
+        "condition": "inbreeding_coefficient >= 0.50",
+        "multiplier": 0.3
+      },
+      {
+        "id": "fp_cross_genus",
+        "condition": "pairing_tier == tier_4",
+        "multiplier": 0.6
+      },
+      {
+        "id": "fp_cross_tribe",
+        "condition": "pairing_tier == tier_5",
+        "multiplier": 0.3
+      },
+      {
+        "id": "fp_extinct_parent",
+        "condition": "any_parent.status == extinct",
+        "multiplier": 0.7
+      },
+      {
+        "id": "fp_low_dna_completeness",
+        "condition": "extinct_parent.dna_completeness < 0.60",
+        "multiplier": 0.5
+      },
+      {
+        "id": "fp_genetic_instability",
+        "condition": "genetic_stability < 0.30",
+        "multiplier": 0.6
+      },
+      {
+        "id": "fp_extreme_size_mismatch",
+        "condition": "parent_size_ratio > 4.0",
+        "multiplier": 0.75,
+        "note": "gameplay-tuned; realistic breeding requires compatible body sizes"
+      }
+    ]
+  },
+  "mutationRules": {
+    "description": "Random trait mutations per offspring. Chance scales with genetic instability.",
+    "baseMutationChancePerTrait": 0.01,
+    "instabilityScaling": "mutation_chance = base + (1.0 - genetic_stability) * 0.20",
+    "mutationTypes": [
+      {
+        "id": "mut_color_shift",
+        "weight": 0.3,
+        "description": "Random shift in coat color allele"
+      },
+      {
+        "id": "mut_size_variance",
+        "weight": 0.25,
+        "description": "Body size deviates \u00b115% from expected blend"
+      },
+      {
+        "id": "mut_trait_flip",
+        "weight": 0.2,
+        "description": "Single categorical trait flips to unexpected option"
+      },
+      {
+        "id": "mut_stat_variance",
+        "weight": 0.15,
+        "description": "One numeric stat shifts \u00b10.15 from expected"
+      },
+      {
+        "id": "mut_novel_pattern",
+        "weight": 0.07,
+        "description": "Unusual coat pattern appears from suppressed alleles"
+      },
+      {
+        "id": "mut_structural_anomaly",
+        "weight": 0.03,
+        "description": "Rare morphological anomaly \u2014 visual only, health neutral unless compounded"
+      }
+    ]
+  },
+  "inheritanceRules": {
+    "numericTraits": {
+      "default": "midpoint_blend",
+      "formula": "offspring_value = (parent1_value + parent2_value) / 2 + variance",
+      "variance": "Normal(mean=0, stddev=0.08) clipped to trait min/max",
+      "polygenicNote": "Polygenic traits use blending. Non-polygenic numeric traits use same formula with reduced variance (stddev=0.03)."
+    },
+    "categoricalTraits": {
+      "default": "dominant_recessive",
+      "logic": "Each parent contributes one allele. Dominant expressed if present. Both recessive = recessive phenotype. Codominance possible for coat color.",
+      "blendingCategorical": "For traits marked inheritanceMode=blending_categorical, offspring may express intermediate or novel category."
+    },
+    "booleanTraits": {
+      "default": "standard_mendelian",
+      "logic": "Treat True as dominant allele, False as recessive. Heterozygote expresses dominant."
+    },
+    "computedTraits": {
+      "traits": [
+        "trait_inbreeding_coefficient",
+        "trait_genetic_stability",
+        "trait_mutation_rate"
+      ],
+      "logic": "Computed at breed-time from pedigree and pairing tier. Not inherited directly."
+    }
+  },
+  "hybridNamingRules": {
+    "description": "Rules for naming hybrid lineages in the game.",
+    "rules": [
+      {
+        "id": "hn_same_genus",
+        "condition": "tier_3_same_genus",
+        "format": "portmanteau or common hybrid name (e.g. Coywolf, Wolfdog, Coydog)",
+        "examples": [
+          "Coywolf",
+          "Wolfdog",
+          "Coydog",
+          "Jackalwolf"
+        ],
+        "customNameAllowed": true
+      },
+      {
+        "id": "hn_experimental",
+        "condition": "tier_4_or_tier_5",
+        "format": "EXP-[GenusAbbr1][GenusAbbr2] Gen[N]",
+        "examples": [
+          "EXP-CanLyc Gen1",
+          "EXP-VulCan Gen2"
+        ],
+        "customNameAllowed": true,
+        "note": "Prefix retained until lineage stabilizes above stability threshold 0.60 for 3 generations"
+      },
+      {
+        "id": "hn_revival",
+        "condition": "tier_6_extinct_caninae",
+        "format": "REVIVAL-[ExtinctID] Gen[N]",
+        "examples": [
+          "REVIVAL-DireWolf Gen1",
+          "REVIVAL-DireWolf Gen3"
+        ],
+        "customNameAllowed": true,
+        "note": "Player may rename once lineage achieves fertility >= 0.50"
+      },
+      {
+        "id": "hn_ancient",
+        "condition": "tier_7_borophaginae",
+        "format": "ANCIENT-[BorAbbr]+[ExtantAbbr] Gen[N]",
+        "examples": [
+          "ANCIENT-Bor+Wolf Gen1"
+        ],
+        "customNameAllowed": true,
+        "note": "Player may rename once lineage achieves stability >= 0.50"
+      }
+    ]
+  },
+  "extinctDNAReconstructionRules": {
+    "description": "Mechanic for unlocking extinct species as breeding participants.",
+    "stages": [
+      {
+        "stage": 1,
+        "dnaCompleteness": [
+          0.0,
+          0.25
+        ],
+        "label": "Fossil Record Only",
+        "breedingAllowed": false,
+        "notes": "Species exists in compendium as reference only. Can be studied for kennel lore XP."
+      },
+      {
+        "stage": 2,
+        "dnaCompleteness": [
+          0.25,
+          0.5
+        ],
+        "label": "Partial Genome",
+        "breedingAllowed": false,
+        "notes": "Trait data partially populated. Not yet viable for reproduction. Unlock via research missions."
+      },
+      {
+        "stage": 3,
+        "dnaCompleteness": [
+          0.5,
+          0.75
+        ],
+        "label": "Draft Reconstruction",
+        "breedingAllowed": true,
+        "fertilityModifier": 0.4,
+        "stabilityMax": 0.45,
+        "notes": "First experimental pairings allowed (sandbox only). High instability and low fertility expected."
+      },
+      {
+        "stage": 4,
+        "dnaCompleteness": [
+          0.75,
+          0.9
+        ],
+        "label": "Advanced Reconstruction",
+        "breedingAllowed": true,
+        "fertilityModifier": 0.65,
+        "stabilityMax": 0.65,
+        "notes": "Improved offspring viability. Revival lineage naming unlocks."
+      },
+      {
+        "stage": 5,
+        "dnaCompleteness": [
+          0.9,
+          1.0
+        ],
+        "label": "Full Revival",
+        "breedingAllowed": true,
+        "fertilityModifier": 0.85,
+        "stabilityMax": 0.85,
+        "notes": "Near-complete genome. Offspring approach historical species baseline. Player may unlock de-extinction achievement."
+      }
+    ],
+    "researchMechanics": {
+      "progressSources": [
+        "fossil_analysis_missions",
+        "in_game_research_currency",
+        "NPC_scientist_events",
+        "player_breeding_data_contribution"
+      ],
+      "note": "DNA completeness is per-species and persists across player save. Shared pool if future multiplayer is added."
+    }
+  },
+  "realisticModeEnforcement": {
+    "blockedPairings": [
+      "tier_4_same_tribe_diff_genus",
+      "tier_5_same_subfamily_diff_tribe",
+      "tier_6_extinct_caninae_x_extant",
+      "tier_7_borophaginae_x_any"
+    ],
+    "allowedWithWarning": [
+      "tier_3_same_genus"
+    ],
+    "notes": "Realistic mode mimics documented real-world hybridization. Only Canis intragroup crosses (wolf x dog x coyote x jackal) are freely permitted."
+  },
+  "sandboxModeRules": {
+    "allPairingsAllowed": true,
+    "instabilityAlwaysApplied": true,
+    "playerNotification": "Sandbox mode: all pairings are theoretical. Instability and fertility penalties still apply. Offspring may be highly mutable.",
+    "notes": "Sandbox is the primary mode for player experimentation and lineage building. No biological restrictions enforced."
+  }
+}

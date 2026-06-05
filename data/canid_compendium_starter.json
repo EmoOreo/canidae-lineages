@@ -1,0 +1,725 @@
+{
+  "version": "0.1.0",
+  "notes": "All numeric ranges are gameplay-tuned approximations unless marked [SCIENTIFIC]. Values marked [APPROX] are reasonable estimates for simulation use.",
+  "canids": [
+    {
+      "id": "canis_lupus_familiaris",
+      "commonName": "Domestic Dog",
+      "scientificName": "Canis lupus familiaris",
+      "status": "domesticated",
+      "taxonomy": {
+        "family": "Canidae",
+        "subfamily": "Caninae",
+        "tribe": "Canini",
+        "subtribe": "Canina",
+        "genus": "Canis",
+        "species": "lupus",
+        "subspecies": "familiaris"
+      },
+      "bodyMassKg": {
+        "min": 1.5,
+        "max": 90.0,
+        "note": "extreme domestic variation; gameplay-tuned to breed archetype"
+      },
+      "bodyLengthCm": {
+        "min": 30,
+        "max": 110,
+        "note": "[APPROX]"
+      },
+      "shoulderHeightCm": {
+        "min": 15,
+        "max": 80,
+        "note": "[APPROX]"
+      },
+      "skullType": "variable",
+      "muzzleLength": "variable",
+      "earType": "variable",
+      "tailType": "variable",
+      "coatType": "variable",
+      "defaultCoatColors": [
+        "fawn",
+        "black",
+        "white",
+        "brindle",
+        "sable",
+        "merle",
+        "tricolor"
+      ],
+      "habitats": [
+        "urban",
+        "rural",
+        "domestic"
+      ],
+      "climateTolerance": [
+        "temperate",
+        "tropical",
+        "arctic",
+        "desert"
+      ],
+      "dietSpecialization": "omnivore",
+      "sociality": "pack/domestic",
+      "temperamentBaseline": 0.75,
+      "trainabilityBaseline": 0.9,
+      "preyDriveBaseline": 0.5,
+      "enduranceBaseline": 0.6,
+      "fertilityBaseline": 0.95,
+      "compatibilityGroup": "Canis",
+      "modelArchetype": "medium_canid_wolf_type",
+      "notes": "Widest morphological variance of any canid. Treat as a flexible archetype with breed-level overrides. Fully interfertile with gray wolf and coyote."
+    },
+    {
+      "id": "canis_lupus",
+      "commonName": "Gray Wolf",
+      "scientificName": "Canis lupus",
+      "status": "extant",
+      "taxonomy": {
+        "family": "Canidae",
+        "subfamily": "Caninae",
+        "tribe": "Canini",
+        "subtribe": "Canina",
+        "genus": "Canis",
+        "species": "lupus"
+      },
+      "bodyMassKg": {
+        "min": 20,
+        "max": 80,
+        "note": "[SCIENTIFIC]"
+      },
+      "bodyLengthCm": {
+        "min": 100,
+        "max": 160,
+        "note": "[SCIENTIFIC] head+body"
+      },
+      "shoulderHeightCm": {
+        "min": 60,
+        "max": 90,
+        "note": "[SCIENTIFIC]"
+      },
+      "skullType": "elongated_robust",
+      "muzzleLength": "long",
+      "earType": "erect_triangular",
+      "tailType": "bushy_straight",
+      "coatType": "double_dense",
+      "defaultCoatColors": [
+        "gray",
+        "tawny",
+        "black",
+        "white",
+        "cream"
+      ],
+      "habitats": [
+        "boreal_forest",
+        "tundra",
+        "grassland",
+        "mountain"
+      ],
+      "climateTolerance": [
+        "arctic",
+        "subarctic",
+        "temperate"
+      ],
+      "dietSpecialization": "hypercarnivore",
+      "sociality": "pack",
+      "temperamentBaseline": 0.4,
+      "trainabilityBaseline": 0.55,
+      "preyDriveBaseline": 0.95,
+      "enduranceBaseline": 0.9,
+      "fertilityBaseline": 0.85,
+      "compatibilityGroup": "Canis",
+      "modelArchetype": "large_canid_wolf_type",
+      "notes": "Apex pack predator. Direct ancestor of domestic dog. Interfertile with dog and coyote. Strong directional selection for stamina and prey drive."
+    },
+    {
+      "id": "canis_latrans",
+      "commonName": "Coyote",
+      "scientificName": "Canis latrans",
+      "status": "extant",
+      "taxonomy": {
+        "family": "Canidae",
+        "subfamily": "Caninae",
+        "tribe": "Canini",
+        "subtribe": "Canina",
+        "genus": "Canis",
+        "species": "latrans"
+      },
+      "bodyMassKg": {
+        "min": 7,
+        "max": 20,
+        "note": "[SCIENTIFIC]"
+      },
+      "bodyLengthCm": {
+        "min": 75,
+        "max": 100,
+        "note": "[SCIENTIFIC]"
+      },
+      "shoulderHeightCm": {
+        "min": 45,
+        "max": 65,
+        "note": "[APPROX]"
+      },
+      "skullType": "elongated_slender",
+      "muzzleLength": "long_narrow",
+      "earType": "erect_pointed",
+      "tailType": "bushy_drooping",
+      "coatType": "coarse_medium",
+      "defaultCoatColors": [
+        "tawny_gray",
+        "russet",
+        "buff",
+        "black_tipped"
+      ],
+      "habitats": [
+        "grassland",
+        "desert",
+        "scrubland",
+        "suburban",
+        "forest_edge"
+      ],
+      "climateTolerance": [
+        "temperate",
+        "desert",
+        "subarctic"
+      ],
+      "dietSpecialization": "generalist_omnivore",
+      "sociality": "pair_to_small_pack",
+      "temperamentBaseline": 0.35,
+      "trainabilityBaseline": 0.5,
+      "preyDriveBaseline": 0.8,
+      "enduranceBaseline": 0.85,
+      "fertilityBaseline": 0.9,
+      "compatibilityGroup": "Canis",
+      "modelArchetype": "medium_canid_wolf_type",
+      "notes": "Highly adaptable. Naturally hybridizes with wolf (coywolf) and dog (coydog). North American native. Known for vocalization range."
+    },
+    {
+      "id": "canis_aureus",
+      "commonName": "Golden Jackal",
+      "scientificName": "Canis aureus",
+      "status": "extant",
+      "taxonomy": {
+        "family": "Canidae",
+        "subfamily": "Caninae",
+        "tribe": "Canini",
+        "subtribe": "Canina",
+        "genus": "Canis",
+        "species": "aureus"
+      },
+      "bodyMassKg": {
+        "min": 6,
+        "max": 14,
+        "note": "[SCIENTIFIC]"
+      },
+      "bodyLengthCm": {
+        "min": 60,
+        "max": 106,
+        "note": "[SCIENTIFIC]"
+      },
+      "shoulderHeightCm": {
+        "min": 40,
+        "max": 50,
+        "note": "[APPROX]"
+      },
+      "skullType": "medium_elongated",
+      "muzzleLength": "medium",
+      "earType": "erect_medium",
+      "tailType": "bushy_medium",
+      "coatType": "short_dense",
+      "defaultCoatColors": [
+        "golden_yellow",
+        "buff",
+        "tawny",
+        "reddish_brown"
+      ],
+      "habitats": [
+        "savanna",
+        "scrubland",
+        "forest_edge",
+        "wetland"
+      ],
+      "climateTolerance": [
+        "tropical",
+        "subtropical",
+        "temperate"
+      ],
+      "dietSpecialization": "omnivore",
+      "sociality": "pair_to_small_group",
+      "temperamentBaseline": 0.3,
+      "trainabilityBaseline": 0.45,
+      "preyDriveBaseline": 0.7,
+      "enduranceBaseline": 0.75,
+      "fertilityBaseline": 0.85,
+      "compatibilityGroup": "Canis",
+      "modelArchetype": "medium_canid_jackal_type",
+      "notes": "Closest wild relative to domestic dog after gray wolf. Wide range from SE Europe to SE Asia. Known hybridizer in wild-adjacent regions."
+    },
+    {
+      "id": "vulpes_vulpes",
+      "commonName": "Red Fox",
+      "scientificName": "Vulpes vulpes",
+      "status": "extant",
+      "taxonomy": {
+        "family": "Canidae",
+        "subfamily": "Caninae",
+        "tribe": "Vulpini",
+        "subtribe": null,
+        "genus": "Vulpes",
+        "species": "vulpes"
+      },
+      "bodyMassKg": {
+        "min": 2.2,
+        "max": 14.0,
+        "note": "[SCIENTIFIC]"
+      },
+      "bodyLengthCm": {
+        "min": 45,
+        "max": 90,
+        "note": "[SCIENTIFIC]"
+      },
+      "shoulderHeightCm": {
+        "min": 35,
+        "max": 50,
+        "note": "[APPROX]"
+      },
+      "skullType": "slender_elongated",
+      "muzzleLength": "long_tapered",
+      "earType": "large_erect",
+      "tailType": "large_bushy_white_tipped",
+      "coatType": "thick_soft",
+      "defaultCoatColors": [
+        "russet_red",
+        "white_belly",
+        "black_legs",
+        "silver_phase",
+        "cross_phase"
+      ],
+      "habitats": [
+        "forest",
+        "grassland",
+        "urban",
+        "farmland",
+        "tundra"
+      ],
+      "climateTolerance": [
+        "arctic",
+        "temperate",
+        "subtropical"
+      ],
+      "dietSpecialization": "omnivore",
+      "sociality": "solitary_to_family_group",
+      "temperamentBaseline": 0.25,
+      "trainabilityBaseline": 0.35,
+      "preyDriveBaseline": 0.75,
+      "enduranceBaseline": 0.65,
+      "fertilityBaseline": 0.85,
+      "compatibilityGroup": "Vulpes",
+      "modelArchetype": "medium_canid_fox_type",
+      "notes": "Most widespread wild carnivore. Multiple color morphs. Strong prey/pounce drive. Reproductively isolated from Canis group \u2014 sandbox cross only."
+    },
+    {
+      "id": "vulpes_lagopus",
+      "commonName": "Arctic Fox",
+      "scientificName": "Vulpes lagopus",
+      "status": "extant",
+      "taxonomy": {
+        "family": "Canidae",
+        "subfamily": "Caninae",
+        "tribe": "Vulpini",
+        "subtribe": null,
+        "genus": "Vulpes",
+        "species": "lagopus"
+      },
+      "bodyMassKg": {
+        "min": 1.4,
+        "max": 9.4,
+        "note": "[SCIENTIFIC]"
+      },
+      "bodyLengthCm": {
+        "min": 45,
+        "max": 68,
+        "note": "[SCIENTIFIC]"
+      },
+      "shoulderHeightCm": {
+        "min": 25,
+        "max": 35,
+        "note": "[APPROX]"
+      },
+      "skullType": "compact_rounded",
+      "muzzleLength": "short_compact",
+      "earType": "small_rounded",
+      "tailType": "large_fluffy",
+      "coatType": "ultra_dense_double",
+      "defaultCoatColors": [
+        "white_winter",
+        "blue_gray_winter",
+        "brown_summer",
+        "gray_brown_summer"
+      ],
+      "habitats": [
+        "arctic_tundra",
+        "sea_ice_edge",
+        "subarctic"
+      ],
+      "climateTolerance": [
+        "arctic",
+        "subarctic"
+      ],
+      "dietSpecialization": "opportunistic_carnivore",
+      "sociality": "solitary_to_family",
+      "temperamentBaseline": 0.2,
+      "trainabilityBaseline": 0.3,
+      "preyDriveBaseline": 0.7,
+      "enduranceBaseline": 0.8,
+      "fertilityBaseline": 0.8,
+      "compatibilityGroup": "Vulpes",
+      "modelArchetype": "small_canid_fox_type",
+      "notes": "Seasonal coat dimorphism \u2014 blue and white morphs. Exceptional cold tolerance. Smallest arctic predator to maintain metabolic independence in polar winter."
+    },
+    {
+      "id": "vulpes_zerda",
+      "commonName": "Fennec Fox",
+      "scientificName": "Vulpes zerda",
+      "status": "extant",
+      "taxonomy": {
+        "family": "Canidae",
+        "subfamily": "Caninae",
+        "tribe": "Vulpini",
+        "subtribe": null,
+        "genus": "Vulpes",
+        "species": "zerda"
+      },
+      "bodyMassKg": {
+        "min": 0.68,
+        "max": 1.6,
+        "note": "[SCIENTIFIC]"
+      },
+      "bodyLengthCm": {
+        "min": 24,
+        "max": 41,
+        "note": "[SCIENTIFIC]"
+      },
+      "shoulderHeightCm": {
+        "min": 18,
+        "max": 22,
+        "note": "[APPROX]"
+      },
+      "skullType": "small_domed",
+      "muzzleLength": "short_narrow",
+      "earType": "very_large_bat_like",
+      "tailType": "medium_bushy",
+      "coatType": "soft_sandy",
+      "defaultCoatColors": [
+        "cream",
+        "sandy_buff",
+        "white_belly"
+      ],
+      "habitats": [
+        "saharan_desert",
+        "semi_arid_scrub"
+      ],
+      "climateTolerance": [
+        "desert",
+        "arid"
+      ],
+      "dietSpecialization": "insectivore_omnivore",
+      "sociality": "pair_to_small_group",
+      "temperamentBaseline": 0.45,
+      "trainabilityBaseline": 0.4,
+      "preyDriveBaseline": 0.55,
+      "enduranceBaseline": 0.6,
+      "fertilityBaseline": 0.75,
+      "compatibilityGroup": "Vulpes_small",
+      "modelArchetype": "tiny_canid_fennec_type",
+      "notes": "Smallest canid. Enormous ears for thermoregulation and prey detection. Nocturnal desert specialist. Often kept as exotic pet."
+    },
+    {
+      "id": "chrysocyon_brachyurus",
+      "commonName": "Maned Wolf",
+      "scientificName": "Chrysocyon brachyurus",
+      "status": "extant",
+      "taxonomy": {
+        "family": "Canidae",
+        "subfamily": "Caninae",
+        "tribe": "Canini",
+        "subtribe": "Cerdocyonina",
+        "genus": "Chrysocyon",
+        "species": "brachyurus"
+      },
+      "bodyMassKg": {
+        "min": 20,
+        "max": 30,
+        "note": "[SCIENTIFIC]"
+      },
+      "bodyLengthCm": {
+        "min": 95,
+        "max": 132,
+        "note": "[SCIENTIFIC]"
+      },
+      "shoulderHeightCm": {
+        "min": 67,
+        "max": 87,
+        "note": "[SCIENTIFIC]"
+      },
+      "skullType": "narrow_elongated",
+      "muzzleLength": "very_long",
+      "earType": "large_erect",
+      "tailType": "short_white_tipped",
+      "coatType": "long_reddish_mane",
+      "defaultCoatColors": [
+        "reddish_gold",
+        "black_legs",
+        "black_mane",
+        "white_throat",
+        "white_tail_tip"
+      ],
+      "habitats": [
+        "cerrado",
+        "grassland",
+        "wetland_edge"
+      ],
+      "climateTolerance": [
+        "tropical",
+        "subtropical"
+      ],
+      "dietSpecialization": "omnivore_frugivore",
+      "sociality": "solitary",
+      "temperamentBaseline": 0.2,
+      "trainabilityBaseline": 0.25,
+      "preyDriveBaseline": 0.55,
+      "enduranceBaseline": 0.7,
+      "fertilityBaseline": 0.65,
+      "compatibilityGroup": "SouthAmerican_Canini",
+      "modelArchetype": "large_long_legged_canid",
+      "notes": "Not closely related to wolves despite appearance. Long legs evolved for cerrado grassland visibility. Sole member of genus Chrysocyon. Frugivore eating lobeira fruit."
+    },
+    {
+      "id": "lycaon_pictus",
+      "commonName": "African Wild Dog",
+      "scientificName": "Lycaon pictus",
+      "status": "extant",
+      "taxonomy": {
+        "family": "Canidae",
+        "subfamily": "Caninae",
+        "tribe": "Canini",
+        "subtribe": "Canina",
+        "genus": "Lycaon",
+        "species": "pictus"
+      },
+      "bodyMassKg": {
+        "min": 18,
+        "max": 36,
+        "note": "[SCIENTIFIC]"
+      },
+      "bodyLengthCm": {
+        "min": 75,
+        "max": 141,
+        "note": "[SCIENTIFIC]"
+      },
+      "shoulderHeightCm": {
+        "min": 60,
+        "max": 78,
+        "note": "[SCIENTIFIC]"
+      },
+      "skullType": "broad_robust",
+      "muzzleLength": "medium_broad",
+      "earType": "very_large_rounded",
+      "tailType": "white_tipped_flag",
+      "coatType": "short_patterned",
+      "defaultCoatColors": [
+        "black",
+        "white",
+        "yellow_orange",
+        "individual_pattern"
+      ],
+      "habitats": [
+        "savanna",
+        "woodland",
+        "semi_arid"
+      ],
+      "climateTolerance": [
+        "tropical",
+        "subtropical"
+      ],
+      "dietSpecialization": "hypercarnivore",
+      "sociality": "strict_pack",
+      "temperamentBaseline": 0.3,
+      "trainabilityBaseline": 0.2,
+      "preyDriveBaseline": 0.99,
+      "enduranceBaseline": 0.98,
+      "fertilityBaseline": 0.7,
+      "compatibilityGroup": "Lycaon",
+      "modelArchetype": "medium_canid_painted_type",
+      "notes": "Only 4 toes per foot (no dewclaw). Each individual has unique coat pattern. Highest hunt success rate of any African predator (~80%). Cannot hybridize with Canis in realistic mode."
+    },
+    {
+      "id": "cuon_alpinus",
+      "commonName": "Dhole",
+      "scientificName": "Cuon alpinus",
+      "status": "extant",
+      "taxonomy": {
+        "family": "Canidae",
+        "subfamily": "Caninae",
+        "tribe": "Canini",
+        "subtribe": "Canina",
+        "genus": "Cuon",
+        "species": "alpinus"
+      },
+      "bodyMassKg": {
+        "min": 10,
+        "max": 21,
+        "note": "[SCIENTIFIC]"
+      },
+      "bodyLengthCm": {
+        "min": 88,
+        "max": 113,
+        "note": "[SCIENTIFIC]"
+      },
+      "shoulderHeightCm": {
+        "min": 42,
+        "max": 55,
+        "note": "[APPROX]"
+      },
+      "skullType": "short_broad_robust",
+      "muzzleLength": "short_broad",
+      "earType": "rounded_medium",
+      "tailType": "bushy_dark",
+      "coatType": "short_dense_reddish",
+      "defaultCoatColors": [
+        "russet_red",
+        "white_belly",
+        "dark_tail"
+      ],
+      "habitats": [
+        "tropical_forest",
+        "alpine_meadow",
+        "grassland"
+      ],
+      "climateTolerance": [
+        "tropical",
+        "subtropical",
+        "temperate"
+      ],
+      "dietSpecialization": "hypercarnivore",
+      "sociality": "pack_clan",
+      "temperamentBaseline": 0.25,
+      "trainabilityBaseline": 0.2,
+      "preyDriveBaseline": 0.95,
+      "enduranceBaseline": 0.92,
+      "fertilityBaseline": 0.72,
+      "compatibilityGroup": "Cuon",
+      "modelArchetype": "medium_canid_wolf_type",
+      "notes": "Whistling dog; unique cuon dentition with extra molar cusp. Fewer teeth than Canis. Asian pack hunter. Taxonomically distinct enough to be its own genus."
+    },
+    {
+      "id": "aenocyon_dirus",
+      "commonName": "Dire Wolf",
+      "scientificName": "Aenocyon dirus",
+      "status": "extinct",
+      "taxonomy": {
+        "family": "Canidae",
+        "subfamily": "Caninae",
+        "tribe": "Canini",
+        "subtribe": "Canina",
+        "genus": "Aenocyon",
+        "species": "dirus"
+      },
+      "bodyMassKg": {
+        "min": 60,
+        "max": 90,
+        "note": "[APPROX] based on fossil estimates"
+      },
+      "bodyLengthCm": {
+        "min": 150,
+        "max": 195,
+        "note": "[APPROX]"
+      },
+      "shoulderHeightCm": {
+        "min": 72,
+        "max": 88,
+        "note": "[APPROX]"
+      },
+      "skullType": "massive_broad_robust",
+      "muzzleLength": "long_heavy",
+      "earType": "erect_inferred",
+      "tailType": "bushy_inferred",
+      "coatType": "thick_double_inferred",
+      "defaultCoatColors": [
+        "gray_brown_inferred",
+        "dark_sable_inferred"
+      ],
+      "habitats": [
+        "grassland",
+        "forest",
+        "pleistocene_megafauna_habitat"
+      ],
+      "climateTolerance": [
+        "temperate",
+        "subarctic"
+      ],
+      "dietSpecialization": "hypercarnivore_bone_crushing",
+      "sociality": "pack_inferred",
+      "temperamentBaseline": 0.15,
+      "trainabilityBaseline": 0.1,
+      "preyDriveBaseline": 0.99,
+      "enduranceBaseline": 0.85,
+      "fertilityBaseline": 0.5,
+      "compatibilityGroup": "Aenocyon",
+      "modelArchetype": "large_canid_wolf_type",
+      "notes": "Recently reclassified from Canis dirus to Aenocyon dirus (2021). Genomic analysis shows it diverged from gray wolf lineage ~5.7 Mya. Not closely related to living wolves. Sandbox-only pairings with Canis. Extinct: requires DNA reconstruction mechanic."
+    },
+    {
+      "id": "borophagus_diversidens",
+      "commonName": "Borophagus",
+      "scientificName": "Borophagus diversidens",
+      "status": "extinct",
+      "taxonomy": {
+        "family": "Canidae",
+        "subfamily": "Borophaginae",
+        "tribe": "Borophagini",
+        "subtribe": null,
+        "genus": "Borophagus",
+        "species": "diversidens"
+      },
+      "bodyMassKg": {
+        "min": 14,
+        "max": 23,
+        "note": "[APPROX] based on fossil comparisons"
+      },
+      "bodyLengthCm": {
+        "min": 100,
+        "max": 140,
+        "note": "[APPROX]"
+      },
+      "shoulderHeightCm": {
+        "min": 55,
+        "max": 75,
+        "note": "[APPROX]"
+      },
+      "skullType": "hyena_like_domed_crushing",
+      "muzzleLength": "short_crushing",
+      "earType": "erect_inferred",
+      "tailType": "medium_inferred",
+      "coatType": "coarse_inferred",
+      "defaultCoatColors": [
+        "brown_inferred",
+        "dark_streaked_inferred"
+      ],
+      "habitats": [
+        "miocene_pliocene_north_america",
+        "savanna_woodland"
+      ],
+      "climateTolerance": [
+        "temperate"
+      ],
+      "dietSpecialization": "bone_crushing_carnivore",
+      "sociality": "pack_inferred",
+      "temperamentBaseline": 0.1,
+      "trainabilityBaseline": 0.05,
+      "preyDriveBaseline": 0.98,
+      "enduranceBaseline": 0.7,
+      "fertilityBaseline": 0.35,
+      "compatibilityGroup": "Borophaginae",
+      "modelArchetype": "heavy_canid_bone_crusher_type",
+      "notes": "Subfamily Borophaginae \u2014 entirely separate evolutionary branch from modern Caninae. Robust crushing dentition convergent with hyenas. Extinct ~2 Mya. Sandbox-only. DNA reconstruction required. Lowest natural fertility \u2014 ancient lineage revival."
+    }
+  ]
+}

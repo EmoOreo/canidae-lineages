@@ -1,0 +1,508 @@
+{
+  "version": "0.1.0",
+  "notes": "All traits are reusable across any canid. Values are normalized 0.0\u20131.0 unless otherwise noted. 'dominant' and 'recessive' fields reflect Mendelian tendency; complex polygenic traits use 'polygenic: true'.",
+  "categories": {
+    "morphology": [
+      {
+        "id": "trait_body_size",
+        "name": "Body Size",
+        "type": "numeric",
+        "min": 0.1,
+        "max": 1.0,
+        "polygenic": true,
+        "inheritanceMode": "blending_with_regression",
+        "morphTarget3D": "body_scale_uniform",
+        "notes": "Master scalar. Influences mass, height, stamina cost, and litter size. Polygenic \u2014 offspring tend toward midpoint with variance."
+      },
+      {
+        "id": "trait_leg_length",
+        "name": "Leg Length Ratio",
+        "type": "numeric",
+        "min": 0.4,
+        "max": 1.0,
+        "polygenic": true,
+        "inheritanceMode": "blending",
+        "morphTarget3D": "leg_length_scale",
+        "notes": "Relative to body length. Affects terrain traversal speed and visual silhouette."
+      },
+      {
+        "id": "trait_skull_robustness",
+        "name": "Skull Robustness",
+        "type": "numeric",
+        "min": 0.1,
+        "max": 1.0,
+        "polygenic": true,
+        "inheritanceMode": "blending",
+        "morphTarget3D": "skull_width_scale",
+        "notes": "Higher values = broader, heavier skull. Correlates to bite force. Borophagus reference = 1.0."
+      },
+      {
+        "id": "trait_muzzle_length",
+        "name": "Muzzle Length",
+        "type": "numeric",
+        "min": 0.1,
+        "max": 1.0,
+        "polygenic": true,
+        "inheritanceMode": "blending",
+        "morphTarget3D": "muzzle_elongation",
+        "notes": "0.1 = extremely brachycephalic, 1.0 = hyper-elongated (maned wolf). Crosses of extremes produce intermediate muzzles."
+      },
+      {
+        "id": "trait_ear_type",
+        "name": "Ear Type",
+        "type": "categorical",
+        "options": [
+          "erect_large",
+          "erect_medium",
+          "erect_small",
+          "semi_erect",
+          "floppy",
+          "rounded"
+        ],
+        "dominant": "erect_large",
+        "recessive": "floppy",
+        "polygenic": false,
+        "inheritanceMode": "dominant_recessive_with_blending",
+        "morphTarget3D": "ear_erect_blend",
+        "notes": "Ear carriage affects trainability perception and auditory predator/prey detection stat."
+      },
+      {
+        "id": "trait_tail_type",
+        "name": "Tail Type",
+        "type": "categorical",
+        "options": [
+          "bushy_long",
+          "bushy_short",
+          "thin_long",
+          "thin_short",
+          "curled",
+          "bobtail"
+        ],
+        "dominant": "bushy_long",
+        "recessive": "bobtail",
+        "polygenic": false,
+        "inheritanceMode": "dominant_recessive",
+        "morphTarget3D": "tail_shape_blend",
+        "notes": "Cosmetic plus social signal stat modifier."
+      },
+      {
+        "id": "trait_body_mass_modifier",
+        "name": "Body Mass Modifier",
+        "type": "numeric",
+        "min": 0.5,
+        "max": 2.0,
+        "polygenic": true,
+        "inheritanceMode": "blending_with_variance",
+        "morphTarget3D": "body_fat_scale",
+        "notes": "Multiplier on species baseline mass. 1.0 = average. Affects endurance, thermoregulation, fertility."
+      }
+    ],
+    "coat": [
+      {
+        "id": "trait_coat_length",
+        "name": "Coat Length",
+        "type": "categorical",
+        "options": [
+          "short",
+          "medium",
+          "long",
+          "double_dense",
+          "ultra_dense"
+        ],
+        "dominant": "short",
+        "recessive": "long",
+        "polygenic": false,
+        "inheritanceMode": "dominant_recessive",
+        "morphTarget3D": "fur_length_blend",
+        "notes": "Short coat dominant over long in most crosses. Ultra-dense is a double-layer modifier."
+      },
+      {
+        "id": "trait_base_coat_color",
+        "name": "Base Coat Color",
+        "type": "categorical",
+        "options": [
+          "agouti",
+          "black",
+          "white",
+          "cream",
+          "red_orange",
+          "golden_yellow",
+          "sandy",
+          "brown",
+          "gray",
+          "blue_gray"
+        ],
+        "dominant": "agouti",
+        "recessive": "white",
+        "polygenic": false,
+        "inheritanceMode": "multi_allele_interaction",
+        "morphTarget3D": "coat_albedo_tint",
+        "notes": "Maps to a color shader parameter. Agouti (wolf-gray banding) is ancestral dominant."
+      },
+      {
+        "id": "trait_coat_pattern",
+        "name": "Coat Pattern",
+        "type": "categorical",
+        "options": [
+          "solid",
+          "ticked",
+          "sable",
+          "brindle",
+          "merle",
+          "piebald",
+          "painted",
+          "masked",
+          "saddled"
+        ],
+        "dominant": "solid",
+        "recessive": "piebald",
+        "polygenic": true,
+        "inheritanceMode": "multi_allele_complex",
+        "morphTarget3D": "coat_pattern_overlay",
+        "notes": "Merle is a modifier, not base pattern. Painted pattern specific to Lycaon \u2014 exotic in crosses. Brindle is partially dominant."
+      },
+      {
+        "id": "trait_seasonal_coat",
+        "name": "Seasonal Coat Dimorphism",
+        "type": "boolean",
+        "inheritanceMode": "dominant_recessive",
+        "dominant": true,
+        "recessive": false,
+        "morphTarget3D": "seasonal_coat_swap",
+        "notes": "Present in arctic fox and some wolf subspecies. Dominant in crosses. Enables winter/summer coat switching."
+      },
+      {
+        "id": "trait_coat_texture",
+        "name": "Coat Texture",
+        "type": "categorical",
+        "options": [
+          "smooth",
+          "coarse",
+          "silky",
+          "wiry",
+          "fluffy"
+        ],
+        "dominant": "coarse",
+        "recessive": "silky",
+        "polygenic": false,
+        "inheritanceMode": "dominant_recessive",
+        "morphTarget3D": "fur_roughness_blend",
+        "notes": "Affects visual roughness parameter in 3D shader."
+      }
+    ],
+    "behavior": [
+      {
+        "id": "trait_temperament",
+        "name": "Temperament (Boldness)",
+        "type": "numeric",
+        "min": 0.0,
+        "max": 1.0,
+        "polygenic": true,
+        "inheritanceMode": "blending_with_variance",
+        "morphTarget3D": null,
+        "notes": "0.0 = extremely fearful/aggressive, 1.0 = highly trusting/social. Strongly influenced by trainabilityBaseline. Domestic dogs skew high."
+      },
+      {
+        "id": "trait_prey_drive",
+        "name": "Prey Drive",
+        "type": "numeric",
+        "min": 0.0,
+        "max": 1.0,
+        "polygenic": true,
+        "inheritanceMode": "blending_with_dominant_high",
+        "morphTarget3D": null,
+        "notes": "High prey drive is semi-dominant in crosses. Wolf/wild dog pairings push offspring toward higher values."
+      },
+      {
+        "id": "trait_pack_bonding",
+        "name": "Pack Bonding Tendency",
+        "type": "numeric",
+        "min": 0.0,
+        "max": 1.0,
+        "polygenic": true,
+        "inheritanceMode": "blending",
+        "morphTarget3D": null,
+        "notes": "Affects social behavior mechanics. High in gray wolf, African wild dog. Low in red fox, maned wolf."
+      },
+      {
+        "id": "trait_trainability",
+        "name": "Trainability",
+        "type": "numeric",
+        "min": 0.0,
+        "max": 1.0,
+        "polygenic": true,
+        "inheritanceMode": "blending_with_regression",
+        "morphTarget3D": null,
+        "notes": "Correlates with domestication history. Synergistic with temperament \u2014 high both = highly trainable hybrids."
+      },
+      {
+        "id": "trait_vocalization",
+        "name": "Vocalization Type",
+        "type": "categorical",
+        "options": [
+          "bark",
+          "howl",
+          "yip_bark",
+          "whistle_chirp",
+          "growl_dominant",
+          "mixed"
+        ],
+        "inheritanceMode": "blending_categorical",
+        "morphTarget3D": null,
+        "notes": "Affects audio flavor. Dhole = whistle_chirp; canids without true bark (wolves, foxes) inherit bark if crossed with domestic dog."
+      }
+    ],
+    "ecology": [
+      {
+        "id": "trait_climate_tolerance",
+        "name": "Climate Tolerance",
+        "type": "categorical_set",
+        "options": [
+          "arctic",
+          "subarctic",
+          "temperate",
+          "tropical",
+          "subtropical",
+          "desert",
+          "arid"
+        ],
+        "inheritanceMode": "union_dominant",
+        "morphTarget3D": null,
+        "notes": "Offspring inherit the union of parental tolerances, biased toward the more tolerant parent. Arctic coat genes may unlock arctic tolerance."
+      },
+      {
+        "id": "trait_diet_specialism",
+        "name": "Diet Specialization",
+        "type": "categorical",
+        "options": [
+          "hypercarnivore",
+          "carnivore",
+          "omnivore",
+          "frugivore_omnivore",
+          "insectivore_omnivore"
+        ],
+        "inheritanceMode": "blending_toward_omnivore",
+        "morphTarget3D": null,
+        "notes": "Crosses tend to drift toward omnivore unless both parents are hypercarnivore."
+      },
+      {
+        "id": "trait_habitat_preference",
+        "name": "Habitat Preference",
+        "type": "categorical_set",
+        "options": [
+          "forest",
+          "grassland",
+          "desert",
+          "arctic_tundra",
+          "urban",
+          "wetland",
+          "savanna",
+          "alpine"
+        ],
+        "inheritanceMode": "union_with_penalty",
+        "morphTarget3D": null,
+        "notes": "Wide hybrid may require habitat enrichment to remain healthy in kennel."
+      }
+    ],
+    "health": [
+      {
+        "id": "trait_immune_vigor",
+        "name": "Immune System Vigor",
+        "type": "numeric",
+        "min": 0.0,
+        "max": 1.0,
+        "polygenic": true,
+        "inheritanceMode": "heterosis_possible",
+        "morphTarget3D": null,
+        "notes": "Hybrid vigor (heterosis) can boost this above either parent. Inbreeding depresses it."
+      },
+      {
+        "id": "trait_lifespan_potential",
+        "name": "Lifespan Potential",
+        "type": "numeric",
+        "min": 0.2,
+        "max": 1.0,
+        "polygenic": true,
+        "inheritanceMode": "blending",
+        "morphTarget3D": null,
+        "notes": "Normalized across canid range (~3\u201320 years). Small canids live longer in wild; domestic dogs inverted."
+      },
+      {
+        "id": "trait_inbreeding_coefficient",
+        "name": "Inbreeding Coefficient",
+        "type": "numeric",
+        "min": 0.0,
+        "max": 1.0,
+        "polygenic": false,
+        "inheritanceMode": "computed_from_pedigree",
+        "morphTarget3D": null,
+        "notes": "Computed dynamically. Values above 0.25 begin applying health penalties. Above 0.50 = severe penalties."
+      },
+      {
+        "id": "trait_genetic_stability",
+        "name": "Genetic Stability",
+        "type": "numeric",
+        "min": 0.0,
+        "max": 1.0,
+        "polygenic": true,
+        "inheritanceMode": "computed_and_heritable",
+        "morphTarget3D": null,
+        "notes": "Decreases with cross-genus/cross-tribe pairings. Below 0.3 = high mutation chance. Extinct + extant pairings start at 0.4 max."
+      }
+    ],
+    "fertility": [
+      {
+        "id": "trait_fertility_rate",
+        "name": "Fertility Rate",
+        "type": "numeric",
+        "min": 0.0,
+        "max": 1.0,
+        "polygenic": true,
+        "inheritanceMode": "blending_with_penalty",
+        "morphTarget3D": null,
+        "notes": "Base fertility from species. Penalized by inbreeding, genetic instability, cross-genus pairing."
+      },
+      {
+        "id": "trait_litter_size_potential",
+        "name": "Litter Size Potential",
+        "type": "numeric",
+        "min": 1,
+        "max": 12,
+        "polygenic": true,
+        "inheritanceMode": "blending_with_body_size_correlation",
+        "morphTarget3D": null,
+        "notes": "Larger body mass = larger litter potential. [SCIENTIFIC reference: Smith et al. 2011]"
+      },
+      {
+        "id": "trait_sterility_risk",
+        "name": "Sterility Risk",
+        "type": "numeric",
+        "min": 0.0,
+        "max": 1.0,
+        "polygenic": false,
+        "inheritanceMode": "computed",
+        "morphTarget3D": null,
+        "notes": "Increases sharply in cross-tribe or cross-subfamily pairings. Sandbox only for most distant pairings."
+      }
+    ],
+    "genetic_meta": [
+      {
+        "id": "trait_mutation_rate",
+        "name": "Mutation Rate Modifier",
+        "type": "numeric",
+        "min": 0.0,
+        "max": 1.0,
+        "polygenic": false,
+        "inheritanceMode": "computed_from_stability",
+        "morphTarget3D": null,
+        "notes": "Derived from genetic_stability. Low stability = higher chance of random trait mutation each generation."
+      },
+      {
+        "id": "trait_dna_completeness",
+        "name": "DNA Completeness (Extinct Only)",
+        "type": "numeric",
+        "min": 0.0,
+        "max": 1.0,
+        "polygenic": false,
+        "inheritanceMode": "not_heritable",
+        "morphTarget3D": null,
+        "notes": "Represents how complete the reconstructed genome is for extinct species. 0.0 = placeholder only. Affects fertility and stability of offspring involving extinct parents."
+      }
+    ],
+    "morph_targets_3d": [
+      {
+        "id": "mt_body_scale_uniform",
+        "description": "Uniform XYZ scale of full body mesh",
+        "range": [
+          0.3,
+          3.0
+        ]
+      },
+      {
+        "id": "mt_leg_length_scale",
+        "description": "Y-axis scale on leg bones only",
+        "range": [
+          0.5,
+          1.8
+        ]
+      },
+      {
+        "id": "mt_skull_width_scale",
+        "description": "X-axis scale on skull mesh region",
+        "range": [
+          0.6,
+          1.6
+        ]
+      },
+      {
+        "id": "mt_muzzle_elongation",
+        "description": "Z-axis forward extension of muzzle mesh",
+        "range": [
+          0.2,
+          2.0
+        ]
+      },
+      {
+        "id": "mt_ear_erect_blend",
+        "description": "Blend shape between floppy and full erect ear",
+        "range": [
+          0.0,
+          1.0
+        ]
+      },
+      {
+        "id": "mt_tail_shape_blend",
+        "description": "Blend shape from thin straight to bushy curl",
+        "range": [
+          0.0,
+          1.0
+        ]
+      },
+      {
+        "id": "mt_fur_length_blend",
+        "description": "Shader parameter for fur strand length",
+        "range": [
+          0.0,
+          1.0
+        ]
+      },
+      {
+        "id": "mt_coat_albedo_tint",
+        "description": "RGB tint applied to base albedo texture",
+        "range": "RGB [0,0,0] to [1,1,1]"
+      },
+      {
+        "id": "mt_coat_pattern_overlay",
+        "description": "Pattern mask texture blend weight",
+        "range": [
+          0.0,
+          1.0
+        ]
+      },
+      {
+        "id": "mt_seasonal_coat_swap",
+        "description": "Lerp between summer and winter coat texture sets",
+        "range": [
+          0.0,
+          1.0
+        ]
+      },
+      {
+        "id": "mt_fur_roughness_blend",
+        "description": "PBR roughness value for coat material",
+        "range": [
+          0.0,
+          1.0
+        ]
+      },
+      {
+        "id": "mt_body_fat_scale",
+        "description": "Volumetric blend adding girth/mass appearance",
+        "range": [
+          0.0,
+          1.0
+        ]
+      }
+    ]
+  }
+}
