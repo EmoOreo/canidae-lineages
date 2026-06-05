@@ -10,15 +10,41 @@ async function loadJson(path: string) {
   return response.json();
 }
 
+function createFounderAnimals(speciesData: any) {
+  const starterSpecies = [
+    "canis_lupus_familiaris",
+    "canis_lupus",
+    "canis_latrans",
+    "vulpes_vulpes",
+    "vulpes_zerda",
+    "aenocyon_dirus",
+  ];
+
+  return starterSpecies
+    .map((id) => speciesData.canids.find((c: any) => c.id === id))
+    .filter(Boolean)
+    .map((species: any, index: number) => ({
+      id: `founder_${index}`,
+      name: `${species.commonName} Alpha`,
+      speciesId: species.id,
+      generation: 0,
+      genome: {
+        D: [],
+        R: [],
+        M: [],
+        L: {
+          [species.id]: 100,
+        },
+      },
+      stats: {
+        fertility: species.fertilityBaseline ?? 50,
+        stability: 100,
+      },
+    }));
+}
+
 async function bootstrap() {
-  const app = document.querySelector<HTMLDivElement>("#app");
-
-  if (!app) {
-    document.body.innerHTML = "<h1>Error: #app not found</h1>";
-    return;
-  }
-
-  app.innerHTML = "<h1>Loading Canidae: Lineages...</h1>";
+  document.body.innerHTML = "<h1>Loading Canidae: Lineages...</h1>";
 
   try {
     const [species, traits, breedingRules, mutations] = await Promise.all([
@@ -28,29 +54,38 @@ async function bootstrap() {
       loadJson("/data/MUTATION_CATALOG_V1.json"),
     ]);
 
-    app.innerHTML = `
+    const founders = createFounderAnimals(species);
+
+    document.body.innerHTML = `
       <h1>Canidae: Lineages</h1>
-      <h2>Phase 2A - Sprint 1 Complete</h2>
-
-      <p><strong>Species Loaded:</strong> ${species.canids?.length ?? "Unknown"}</p>
-      <p><strong>Trait Library:</strong> Loaded</p>
-      <p><strong>Breeding Rules:</strong> Loaded</p>
-      <p><strong>Mutation Catalog:</strong> ${mutations.mutations?.length ?? "Unknown"} mutations loaded</p>
-
-      <h3>Starter Roster</h3>
+      <h2>Founder Animals Loaded</h2>
+      <p>Species Loaded: ${species.canids?.length ?? "Unknown"}</p>
+      <p>Founders Created: ${founders.length}</p>
       <ul>
-        ${(species.canids ?? [])
-          .map((canid: any) => `<li>${canid.commonName} <em>${canid.scientificName}</em></li>`)
+        ${founders
+          .map(
+            (animal: any) => `
+              <li>
+                <strong>${animal.name}</strong><br>
+                Species: ${animal.speciesId}<br>
+                Generation: ${animal.generation}<br>
+                Fertility: ${animal.stats.fertility}<br>
+                Stability: ${animal.stats.stability}
+              </li>
+            `
+          )
           .join("")}
       </ul>
+      <pre>${JSON.stringify({ founders }, null, 2)}</pre>
     `;
 
-    console.log({ species, traits, breedingRules, mutations });
+    console.log({ species, traits, breedingRules, mutations, founders });
   } catch (error) {
-    app.innerHTML = `
-      <h1>Data Load Failed</h1>
+    document.body.innerHTML = `
+      <h1>Canidae: Lineages Error</h1>
       <pre>${String(error)}</pre>
     `;
+    console.error(error);
   }
 }
 
