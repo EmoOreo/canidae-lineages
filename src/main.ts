@@ -1,7 +1,7 @@
 import "./style.css";
 import { createFounderAnimals } from "./genetics/createFounderAnimals";
 import { resolveCompatibility } from "./breeding/resolveCompatibility";
-import { createOffspring } from "./breeding/createOffspring";
+import { createLitter } from "./breeding/createLitter";
 import type { Animal } from "./types/animal";
 
 const SAVE_KEY = "canidae-lineages-save-v1";
@@ -85,8 +85,16 @@ function renderPedigree(animal: Animal, animals: Animal[], depth = 0, maxDepth =
 
   return `
     <div>${label}</div>
-    ${mother ? renderPedigree(mother, animals, depth + 1, maxDepth) : `<div>${indent}&nbsp;&nbsp;&nbsp;&nbsp;└─ Unknown mother</div>`}
-    ${father ? renderPedigree(father, animals, depth + 1, maxDepth) : `<div>${indent}&nbsp;&nbsp;&nbsp;&nbsp;└─ Unknown father</div>`}
+    ${
+      mother
+        ? renderPedigree(mother, animals, depth + 1, maxDepth)
+        : `<div>${indent}&nbsp;&nbsp;&nbsp;&nbsp;└─ Unknown mother</div>`
+    }
+    ${
+      father
+        ? renderPedigree(father, animals, depth + 1, maxDepth)
+        : `<div>${indent}&nbsp;&nbsp;&nbsp;&nbsp;└─ Unknown father</div>`
+    }
   `;
 }
 
@@ -223,7 +231,7 @@ function renderApp(
 
   app.innerHTML = `
     <h1>Canidae: Lineages</h1>
-    <h2>Phase 2A - Sprint 12B Pedigree System</h2>
+    <h2>Phase 2A - Sprint 13 Litter Generation</h2>
 
     <section>
       <p><strong>Species Loaded:</strong> ${species.canids?.length ?? "Unknown"}</p>
@@ -310,7 +318,7 @@ function renderApp(
     <hr />
 
     <section>
-      <h3>Latest Compatibility</h3>
+      <h3>Latest Compatibility / Litter Info</h3>
       <pre>${JSON.stringify(latestCompatibility, null, 2)}</pre>
     </section>
 
@@ -462,9 +470,10 @@ function renderApp(
       return;
     }
 
-    const offspring = createOffspring(parentA, parentB, compatibility, mutations);
+    const litter = createLitter(parentA, parentB, compatibility, mutations);
 
-    animals.push(offspring);
+    litter.forEach((pup) => animals.push(pup));
+
     saveAnimals(animals);
 
     renderApp(
@@ -473,10 +482,13 @@ function renderApp(
       breedingRules,
       mutations,
       animals,
-      offspring,
-      compatibility,
+      litter[litter.length - 1] ?? null,
+      {
+        ...compatibility,
+        litterSize: litter.length,
+      },
       mode,
-      "Offspring generated and kennel auto-saved.",
+      `Litter generated (${litter.length} pups) and kennel auto-saved.`,
       activeFilters
     );
   });
