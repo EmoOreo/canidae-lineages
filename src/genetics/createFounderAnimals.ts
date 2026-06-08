@@ -1,4 +1,6 @@
 import type { Animal, TraitValue } from "../types/animal";
+import { createFounderGenotype } from "./genotypeEngine";
+import { evaluatePhenotypeFromGenotype } from "./phenotypeEngine";
 
 function normalizeBodySize(species: any): number {
   const maxMass = species.bodyMassKg?.max ?? 50;
@@ -61,7 +63,7 @@ function inferBaseCoatColor(species: any): string {
   return "agouti";
 }
 
-function createFounderPhenotype(species: any): Record<string, TraitValue> {
+function createFounderBasePhenotype(species: any): Record<string, TraitValue> {
   return {
     trait_body_size: normalizeBodySize(species),
     trait_leg_length: normalizeLegLength(species),
@@ -168,11 +170,15 @@ export function createFounderAnimals(speciesData: any): Animal[] {
     .map((id) => speciesData.canids.find((canid: any) => canid.id === id))
     .filter(Boolean)
     .map((species: any, index: number): Animal => {
-      const phenotype = createFounderPhenotype(species);
+      const genotype = createFounderGenotype(species);
+      const basePhenotype = createFounderBasePhenotype(species);
+      const phenotype = evaluatePhenotypeFromGenotype(genotype, basePhenotype);
       const recessiveCarriers = createFounderRecessiveCarriers(species);
 
+      const id = `founder_${index}`;
+
       return {
-        id: `founder_${index}`,
+        id,
         name: `${species.commonName} Alpha`,
         speciesId: species.id,
         generation: 0,
@@ -185,6 +191,17 @@ export function createFounderAnimals(speciesData: any): Animal[] {
         inbreedingCoefficient: 0,
         inbreedingTier: "none",
 
+        genotype,
+        phenotype,
+
+        ancestry: {
+          parentIds: [],
+          founderIds: [id],
+          lineage: {
+            [species.id]: 100,
+          },
+        },
+
         genome: {
           D: Object.keys(phenotype),
           R: recessiveCarriers,
@@ -193,8 +210,6 @@ export function createFounderAnimals(speciesData: any): Animal[] {
             [species.id]: 100,
           },
         },
-
-        phenotype,
 
         stats: {
           fertility: species.fertilityBaseline ?? 0.75,

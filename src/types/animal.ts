@@ -1,5 +1,21 @@
 export type TraitValue = string | number | boolean | string[];
 
+export interface AllelePair {
+  maternal: string;
+  paternal: string;
+}
+
+export interface Genotype {
+  loci: Record<string, AllelePair>;
+  inheritedMutations: string[];
+}
+
+export interface AncestrySnapshot {
+  parentIds: string[];
+  founderIds: string[];
+  lineage: Record<string, number>;
+}
+
 export interface Animal {
   id: string;
   name: string;
@@ -14,14 +30,16 @@ export interface Animal {
   inbreedingCoefficient: number;
   inbreedingTier: "none" | "low" | "moderate" | "high" | "severe";
 
+  genotype: Genotype;
+  phenotype: Record<string, TraitValue>;
+  ancestry: AncestrySnapshot;
+
   genome: {
     D: string[];
     R: string[];
     M: string[];
     L: Record<string, number>;
   };
-
-  phenotype: Record<string, TraitValue>;
 
   stats: {
     fertility: number;

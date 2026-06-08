@@ -5,9 +5,31 @@ import { resolveMutation } from "../genetics/resolveMutation";
 import { resolveTraits } from "../genetics/resolveTraits";
 import { createHybridName } from "./createHybridName";
 import type { InbreedingResult } from "../genetics/calculateInbreeding";
+import {
+  getRecessiveCarriersFromGenotype,
+  inheritGenotype,
+} from "../genetics/genotypeEngine";
+import { evaluatePhenotypeFromGenotype } from "../genetics/phenotypeEngine";
 
 function round(value: number): number {
   return Math.round(value * 100) / 100;
+}
+
+function createAncestrySnapshot(
+  parentA: Animal,
+  parentB: Animal,
+  lineage: Record<string, number>
+) {
+  return {
+    parentIds: [parentA.id, parentB.id],
+    founderIds: Array.from(
+      new Set([
+        ...(parentA.ancestry?.founderIds ?? []),
+        ...(parentB.ancestry?.founderIds ?? []),
+      ])
+    ),
+    lineage,
+  };
 }
 
 export function createOffspring(
@@ -19,6 +41,11 @@ export function createOffspring(
 ): Animal {
   const lineage = resolveLineage(parentA, parentB);
   const traitResult = resolveTraits(parentA, parentB);
+  const genotype = inheritGenotype(parentA, parentB);
+  const phenotype = evaluatePhenotypeFromGenotype(
+    genotype,
+    traitResult.phenotype
+  );
 
   const generation = Math.max(parentA.generation, parentB.generation) + 1;
 
@@ -47,6 +74,12 @@ export function createOffspring(
     mutationData
   );
 
+  const mutationIds = mutation.mutationApplied ? [mutation.mutationId!] : [];
+
+  genotype.inheritedMutations = Array.from(
+    new Set([...genotype.inheritedMutations, ...mutationIds])
+  );
+
   const hybridName = createHybridName(parentA, parentB);
 
   return {
@@ -63,15 +96,24 @@ export function createOffspring(
     inbreedingCoefficient: inbreedingResult.coefficient,
     inbreedingTier: inbreedingResult.tier,
 
+    genotype,
+
+    ancestry: createAncestrySnapshot(parentA, parentB, lineage),
+
     genome: {
-      D: traitResult.dominantTraits,
-      R: traitResult.recessiveCarriers,
-      M: mutation.mutationApplied ? [mutation.mutationId!] : [],
+      D: Object.keys(phenotype),
+      R: Array.from(
+        new Set([
+          ...traitResult.recessiveCarriers,
+          ...getRecessiveCarriersFromGenotype(genotype),
+        ])
+      ),
+      M: mutationIds,
       L: lineage,
     },
 
     phenotype: {
-      ...traitResult.phenotype,
+      ...phenotype,
       trait_inbreeding_coefficient: inbreedingResult.coefficient,
     },
 

@@ -3,7 +3,7 @@ import { createFounderAnimals } from "./genetics/createFounderAnimals";
 import { resolveCompatibility } from "./breeding/resolveCompatibility";
 import { createLitter } from "./breeding/createLitter";
 import { calculateInbreeding } from "./genetics/calculateInbreeding";
-import type { Animal } from "./types/animal";
+import type { Animal, Genotype } from "./types/animal";
 
 const SAVE_KEY = "canidae-lineages-save-v1";
 
@@ -38,7 +38,16 @@ async function loadJson(path: string) {
   return response.json();
 }
 
+function createFallbackGenotype(animal: Animal): Genotype {
+  return {
+    loci: {},
+    inheritedMutations: animal.genome?.M ?? [],
+  };
+}
+
 function migrateAnimal(animal: Animal): Animal {
+  const lineage = animal.genome?.L ?? animal.ancestry?.lineage ?? {};
+
   return {
     ...animal,
     motherId: animal.motherId ?? null,
@@ -47,6 +56,15 @@ function migrateAnimal(animal: Animal): Animal {
     fatherName: animal.fatherName ?? null,
     inbreedingCoefficient: animal.inbreedingCoefficient ?? 0,
     inbreedingTier: animal.inbreedingTier ?? "none",
+    genotype: animal.genotype ?? createFallbackGenotype(animal),
+    ancestry: animal.ancestry ?? {
+      parentIds: [animal.motherId, animal.fatherId].filter(Boolean) as string[],
+      founderIds:
+        animal.generation === 0
+          ? [animal.id]
+          : [],
+      lineage,
+    },
     phenotype: {
       ...(animal.phenotype ?? {}),
       trait_inbreeding_coefficient:
@@ -82,6 +100,25 @@ function renderPhenotype(phenotype: Record<string, unknown>): string {
   return Object.entries(phenotype)
     .map(([key, value]) => `<li><strong>${key}:</strong> ${JSON.stringify(value)}</li>`)
     .join("");
+}
+
+function renderGenotype(genotype: Genotype): string {
+  const loci = genotype?.loci ?? {};
+
+  if (Object.keys(loci).length === 0) {
+    return "<p>No genotype loci stored for this saved animal.</p>";
+  }
+
+  return `
+    <ul>
+      ${Object.entries(loci)
+        .map(
+          ([locus, pair]) =>
+            `<li><strong>${locus}:</strong> ${pair.maternal} / ${pair.paternal}</li>`
+        )
+        .join("")}
+    </ul>
+  `;
 }
 
 function findAnimalById(animals: Animal[], id: string | null): Animal | null {
@@ -140,6 +177,16 @@ function renderAnimal(animal: Animal, animals: Animal[]): string {
       <p><strong>Fertility:</strong> ${animal.stats.fertility}</p>
       <p><strong>Stability:</strong> ${animal.stats.stability}</p>
       <p><strong>Lineage:</strong> ${JSON.stringify(animal.genome.L)}</p>
+      <p><strong>Founder IDs:</strong> ${
+        animal.ancestry?.founderIds?.length
+          ? animal.ancestry.founderIds.join(", ")
+          : "Unknown"
+      }</p>
+
+      <details>
+        <summary>Genotype</summary>
+        ${renderGenotype(animal.genotype)}
+      </details>
 
       <details>
         <summary>Phenotype</summary>
@@ -255,7 +302,7 @@ function renderApp(
 
   app.innerHTML = `
     <h1>Canidae: Lineages</h1>
-    <h2>Phase 2A - Sprint 16 Inbreeding Coefficients</h2>
+    <h2>Architecture Lock 0A - Genotype / Phenotype / Ancestry Foundation</h2>
 
     <section>
       <p><strong>Species Loaded:</strong> ${species.canids?.length ?? "Unknown"}</p>
