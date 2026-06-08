@@ -4,12 +4,18 @@ import { resolveLineage } from "../lineage/resolveLineage";
 import { resolveMutation } from "../genetics/resolveMutation";
 import { resolveTraits } from "../genetics/resolveTraits";
 import { createHybridName } from "./createHybridName";
+import type { InbreedingResult } from "../genetics/calculateInbreeding";
+
+function round(value: number): number {
+  return Math.round(value * 100) / 100;
+}
 
 export function createOffspring(
   parentA: Animal,
   parentB: Animal,
   compatibility: CompatibilityResult,
-  mutationData: any
+  mutationData: any,
+  inbreedingResult: InbreedingResult
 ): Animal {
   const lineage = resolveLineage(parentA, parentB);
   const traitResult = resolveTraits(parentA, parentB);
@@ -22,16 +28,18 @@ export function createOffspring(
   const averageStability =
     (parentA.stats.stability + parentB.stats.stability) / 2;
 
-  const fertility =
-    Math.round(
-      averageFertility *
-        compatibility.compatibility *
-        (1 - compatibility.sterilityChance) *
-        100
-    ) / 100;
+  const fertility = round(
+    averageFertility *
+      compatibility.compatibility *
+      (1 - compatibility.sterilityChance) *
+      inbreedingResult.fertilityMultiplier
+  );
 
-  const stability =
-    Math.round(averageStability * compatibility.compatibility * 100) / 100;
+  const stability = round(
+    averageStability *
+      compatibility.compatibility *
+      inbreedingResult.stabilityMultiplier
+  );
 
   const mutation = resolveMutation(
     compatibility.compatibility,
@@ -52,6 +60,9 @@ export function createOffspring(
     motherName: parentA.name,
     fatherName: parentB.name,
 
+    inbreedingCoefficient: inbreedingResult.coefficient,
+    inbreedingTier: inbreedingResult.tier,
+
     genome: {
       D: traitResult.dominantTraits,
       R: traitResult.recessiveCarriers,
@@ -59,7 +70,10 @@ export function createOffspring(
       L: lineage,
     },
 
-    phenotype: traitResult.phenotype,
+    phenotype: {
+      ...traitResult.phenotype,
+      trait_inbreeding_coefficient: inbreedingResult.coefficient,
+    },
 
     stats: {
       fertility,

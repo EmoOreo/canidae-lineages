@@ -182,6 +182,9 @@ export function createFounderAnimals(speciesData: any): Animal[] {
         motherName: null,
         fatherName: null,
 
+        inbreedingCoefficient: 0,
+        inbreedingTier: "none",
+
         genome: {
           D: Object.keys(phenotype),
           R: recessiveCarriers,

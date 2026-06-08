@@ -11,6 +11,9 @@ export interface Animal {
   motherName: string | null;
   fatherName: string | null;
 
+  inbreedingCoefficient: number;
+  inbreedingTier: "none" | "low" | "moderate" | "high" | "severe";
+
   genome: {
     D: string[];
     R: string[];

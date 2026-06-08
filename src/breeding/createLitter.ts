@@ -1,6 +1,7 @@
 import type { Animal } from "../types/animal";
 import type { CompatibilityResult } from "./resolveCompatibility";
 import { createOffspring } from "./createOffspring";
+import { calculateInbreeding } from "../genetics/calculateInbreeding";
 
 function getLitterPotential(animal: Animal): number {
   const rawValue = Number(animal.phenotype?.trait_litter_size_potential ?? 5);
@@ -15,7 +16,8 @@ function getLitterPotential(animal: Animal): number {
 function calculateLitterSize(
   parentA: Animal,
   parentB: Animal,
-  compatibility: CompatibilityResult
+  compatibility: CompatibilityResult,
+  inbreedingFertilityMultiplier: number
 ): number {
   const litterTraitA = getLitterPotential(parentA);
   const litterTraitB = getLitterPotential(parentB);
@@ -29,7 +31,8 @@ function calculateLitterSize(
   const biologicalBase =
     averageLitterPotential *
     averageFertility *
-    sterilityFactor;
+    sterilityFactor *
+    inbreedingFertilityMultiplier;
 
   const compatibilityPenalty =
     0.55 + compatibilityFactor * 0.65;
@@ -53,13 +56,30 @@ export function createLitter(
   parentA: Animal,
   parentB: Animal,
   compatibility: CompatibilityResult,
-  mutationData: any
+  mutationData: any,
+  animals: Animal[]
 ): Animal[] {
-  const litterSize = calculateLitterSize(parentA, parentB, compatibility);
+  const inbreedingResult = calculateInbreeding(parentA, parentB, animals);
+
+  const litterSize = calculateLitterSize(
+    parentA,
+    parentB,
+    compatibility,
+    inbreedingResult.fertilityMultiplier
+  );
+
   const litter: Animal[] = [];
 
   for (let i = 0; i < litterSize; i++) {
-    litter.push(createOffspring(parentA, parentB, compatibility, mutationData));
+    litter.push(
+      createOffspring(
+        parentA,
+        parentB,
+        compatibility,
+        mutationData,
+        inbreedingResult
+      )
+    );
   }
 
   return litter;

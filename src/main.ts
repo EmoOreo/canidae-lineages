@@ -2,6 +2,7 @@ import "./style.css";
 import { createFounderAnimals } from "./genetics/createFounderAnimals";
 import { resolveCompatibility } from "./breeding/resolveCompatibility";
 import { createLitter } from "./breeding/createLitter";
+import { calculateInbreeding } from "./genetics/calculateInbreeding";
 import type { Animal } from "./types/animal";
 
 const SAVE_KEY = "canidae-lineages-save-v1";
@@ -37,6 +38,24 @@ async function loadJson(path: string) {
   return response.json();
 }
 
+function migrateAnimal(animal: Animal): Animal {
+  return {
+    ...animal,
+    motherId: animal.motherId ?? null,
+    fatherId: animal.fatherId ?? null,
+    motherName: animal.motherName ?? null,
+    fatherName: animal.fatherName ?? null,
+    inbreedingCoefficient: animal.inbreedingCoefficient ?? 0,
+    inbreedingTier: animal.inbreedingTier ?? "none",
+    phenotype: {
+      ...(animal.phenotype ?? {}),
+      trait_inbreeding_coefficient:
+        animal.inbreedingCoefficient ??
+        Number(animal.phenotype?.trait_inbreeding_coefficient ?? 0),
+    },
+  };
+}
+
 function saveAnimals(animals: Animal[]) {
   localStorage.setItem(SAVE_KEY, JSON.stringify({ animals }));
 }
@@ -47,7 +66,9 @@ function loadSavedAnimals(): Animal[] | null {
 
   try {
     const parsed = JSON.parse(rawSave) as SaveData;
-    return Array.isArray(parsed.animals) ? parsed.animals : null;
+    return Array.isArray(parsed.animals)
+      ? parsed.animals.map(migrateAnimal)
+      : null;
   } catch {
     return null;
   }
@@ -107,6 +128,8 @@ function renderAnimal(animal: Animal, animals: Animal[]): string {
       <p><strong>Generation:</strong> ${animal.generation}</p>
       <p><strong>Mother:</strong> ${animal.motherName ?? "Founder"}</p>
       <p><strong>Father:</strong> ${animal.fatherName ?? "Founder"}</p>
+      <p><strong>Inbreeding Coefficient:</strong> ${animal.inbreedingCoefficient ?? 0}</p>
+      <p><strong>Inbreeding Tier:</strong> ${animal.inbreedingTier ?? "none"}</p>
       <p><strong>D Traits:</strong> ${animal.genome.D.length}</p>
       <p><strong>R Carriers:</strong> ${
         animal.genome.R.length ? animal.genome.R.join(", ") : "None"
@@ -159,7 +182,8 @@ function applyKennelFilters(animals: Animal[], filters: KennelFilters): Animal[]
       (animal) =>
         animal.name.toLowerCase().includes(search) ||
         animal.speciesId.toLowerCase().includes(search) ||
-        animal.id.toLowerCase().includes(search)
+        animal.id.toLowerCase().includes(search) ||
+        (animal.inbreedingTier ?? "none").toLowerCase().includes(search)
     );
   }
 
@@ -231,7 +255,7 @@ function renderApp(
 
   app.innerHTML = `
     <h1>Canidae: Lineages</h1>
-    <h2>Phase 2A - Sprint 13 Litter Generation</h2>
+    <h2>Phase 2A - Sprint 16 Inbreeding Coefficients</h2>
 
     <section>
       <p><strong>Species Loaded:</strong> ${species.canids?.length ?? "Unknown"}</p>
@@ -282,7 +306,7 @@ function renderApp(
       <h3>Kennel Management</h3>
 
       <label for="searchInput">Search</label><br />
-      <input id="searchInput" type="text" value="${activeFilters.search}" placeholder="Search name, species, or ID" />
+      <input id="searchInput" type="text" value="${activeFilters.search}" placeholder="Search name, species, ID, or inbreeding tier" />
 
       <br /><br />
 
@@ -318,7 +342,7 @@ function renderApp(
     <hr />
 
     <section>
-      <h3>Latest Compatibility / Litter Info</h3>
+      <h3>Latest Compatibility / Litter / Inbreeding Info</h3>
       <pre>${JSON.stringify(latestCompatibility, null, 2)}</pre>
     </section>
 
@@ -449,6 +473,7 @@ function renderApp(
     if (!parentA || !parentB) return;
 
     const compatibility = resolveCompatibility(parentA, parentB, species);
+    const inbreeding = calculateInbreeding(parentA, parentB, animals);
 
     if (mode === "realistic" && !compatibility.realisticAllowed) {
       renderApp(
@@ -460,6 +485,7 @@ function renderApp(
         null,
         {
           ...compatibility,
+          inbreeding,
           blocked: true,
           blockedReason: "This pairing is blocked in Realistic Mode. Try Sandbox Mode.",
         },
@@ -470,7 +496,7 @@ function renderApp(
       return;
     }
 
-    const litter = createLitter(parentA, parentB, compatibility, mutations);
+    const litter = createLitter(parentA, parentB, compatibility, mutations, animals);
 
     litter.forEach((pup) => animals.push(pup));
 
@@ -486,6 +512,7 @@ function renderApp(
       {
         ...compatibility,
         litterSize: litter.length,
+        inbreeding,
       },
       mode,
       `Litter generated (${litter.length} pups) and kennel auto-saved.`,
