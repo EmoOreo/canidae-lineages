@@ -12,7 +12,7 @@ export function createOffspring(
   mutationData: any
 ): Animal {
   const lineage = resolveLineage(parentA, parentB);
-  const phenotype = resolveTraits(parentA, parentB);
+  const traitResult = resolveTraits(parentA, parentB);
 
   const generation = Math.max(parentA.generation, parentB.generation) + 1;
 
@@ -53,13 +53,13 @@ export function createOffspring(
     fatherName: parentB.name,
 
     genome: {
-      D: Object.keys(phenotype),
-      R: [],
+      D: traitResult.dominantTraits,
+      R: traitResult.recessiveCarriers,
       M: mutation.mutationApplied ? [mutation.mutationId!] : [],
       L: lineage,
     },
 
-    phenotype,
+    phenotype: traitResult.phenotype,
 
     stats: {
       fertility,

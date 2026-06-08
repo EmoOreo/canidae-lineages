@@ -111,6 +111,49 @@ function createFounderPhenotype(species: any): Record<string, TraitValue> {
   };
 }
 
+function createFounderRecessiveCarriers(species: any): string[] {
+  const carriers: string[] = [];
+
+  if (species.id === "canis_lupus_familiaris") {
+    carriers.push("trait_ear_type:floppy");
+    carriers.push("trait_tail_type:bobtail");
+    carriers.push("trait_coat_length:long");
+    carriers.push("trait_base_coat_color:white");
+  }
+
+  if (species.id === "canis_lupus") {
+    carriers.push("trait_base_coat_color:white");
+    carriers.push("trait_coat_length:long");
+    carriers.push("trait_tail_type:bushy_short");
+  }
+
+  if (species.id === "canis_latrans") {
+    carriers.push("trait_base_coat_color:sandy");
+    carriers.push("trait_coat_pattern:masked");
+    carriers.push("trait_tail_type:bushy_short");
+  }
+
+  if (species.id === "vulpes_vulpes") {
+    carriers.push("trait_base_coat_color:black");
+    carriers.push("trait_coat_pattern:piebald");
+    carriers.push("trait_coat_texture:silky");
+  }
+
+  if (species.id === "vulpes_zerda") {
+    carriers.push("trait_ear_type:erect_large");
+    carriers.push("trait_base_coat_color:cream");
+    carriers.push("trait_body_size:0.18");
+  }
+
+  if (species.id === "aenocyon_dirus") {
+    carriers.push("trait_skull_robustness:0.95");
+    carriers.push("trait_body_size:0.95");
+    carriers.push("trait_base_coat_color:gray");
+  }
+
+  return carriers;
+}
+
 export function createFounderAnimals(speciesData: any): Animal[] {
   const starterSpecies = [
     "canis_lupus_familiaris",
@@ -124,31 +167,36 @@ export function createFounderAnimals(speciesData: any): Animal[] {
   return starterSpecies
     .map((id) => speciesData.canids.find((canid: any) => canid.id === id))
     .filter(Boolean)
-    .map((species: any, index: number): Animal => ({
-      id: `founder_${index}`,
-      name: `${species.commonName} Alpha`,
-      speciesId: species.id,
-      generation: 0,
+    .map((species: any, index: number): Animal => {
+      const phenotype = createFounderPhenotype(species);
+      const recessiveCarriers = createFounderRecessiveCarriers(species);
 
-      motherId: null,
-      fatherId: null,
-      motherName: null,
-      fatherName: null,
+      return {
+        id: `founder_${index}`,
+        name: `${species.commonName} Alpha`,
+        speciesId: species.id,
+        generation: 0,
 
-      genome: {
-        D: Object.keys(createFounderPhenotype(species)),
-        R: [],
-        M: [],
-        L: {
-          [species.id]: 100,
+        motherId: null,
+        fatherId: null,
+        motherName: null,
+        fatherName: null,
+
+        genome: {
+          D: Object.keys(phenotype),
+          R: recessiveCarriers,
+          M: [],
+          L: {
+            [species.id]: 100,
+          },
         },
-      },
 
-      phenotype: createFounderPhenotype(species),
+        phenotype,
 
-      stats: {
-        fertility: species.fertilityBaseline ?? 0.75,
-        stability: 100,
-      },
-    }));
+        stats: {
+          fertility: species.fertilityBaseline ?? 0.75,
+          stability: 100,
+        },
+      };
+    });
 }
