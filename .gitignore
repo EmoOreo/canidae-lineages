@@ -22,3 +22,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+# UI/UX handoff artifacts
+screenshots/
+
+# Playwright output
+playwright-report/
+test-results/
