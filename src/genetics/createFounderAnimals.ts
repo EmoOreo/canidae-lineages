@@ -250,6 +250,8 @@ export function createFounderAnimals(
           pregnant: false,
           gestationProgress: 0,
           litterCount: 0,
+          currentSireId: null,
+          currentSireName: null,
         },
 
         inbreedingCoefficient: 0,

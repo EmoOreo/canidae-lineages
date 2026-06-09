@@ -18,13 +18,16 @@ export interface AncestrySnapshot {
 }
 
 export type ChromosomalSex = "XX" | "XY" | "XXY" | "XO" | "mosaic" | "unknown";
+
 export type GonadalSex =
   | "ovaries"
   | "testes"
   | "ovotestes"
   | "streak_gonads"
   | "undifferentiated";
+
 export type PhenotypicSex = "female" | "male" | "intersex" | "ambiguous";
+
 export type ReproductiveRole = "dam" | "sire" | "sterile" | "limited";
 
 export interface SexDevelopment {
@@ -39,6 +42,8 @@ export interface ReproductionState {
   pregnant: boolean;
   gestationProgress: number;
   litterCount: number;
+  currentSireId: string | null;
+  currentSireName: string | null;
 }
 
 export interface Animal {

@@ -5,6 +5,13 @@ import { createLitter } from "./breeding/createLitter";
 import { calculateInbreeding } from "./genetics/calculateInbreeding";
 import { normalizeCarriers } from "./genetics/normalizeCarriers";
 import { calculatePopulationStats } from "./stats/calculatePopulationStats";
+import {
+  advancePregnancy,
+  canBecomePregnant,
+  clearPregnancyAfterBirth,
+  isReadyToGiveBirth,
+  startPregnancy,
+} from "./reproduction/reproductionEngine";
 import type { Animal, Genotype, SexDevelopment } from "./types/animal";
 
 const SAVE_KEY = "canidae-lineages-save-v1";
@@ -102,10 +109,12 @@ function migrateAnimal(animal: Animal): Animal {
     motherName: animal.motherName ?? null,
     fatherName: animal.fatherName ?? null,
     sex: animal.sex ?? createFallbackSex(migratedId),
-    reproduction: animal.reproduction ?? {
-      pregnant: false,
-      gestationProgress: 0,
-      litterCount: 0,
+    reproduction: {
+      pregnant: animal.reproduction?.pregnant ?? false,
+      gestationProgress: animal.reproduction?.gestationProgress ?? 0,
+      litterCount: animal.reproduction?.litterCount ?? 0,
+      currentSireId: animal.reproduction?.currentSireId ?? null,
+      currentSireName: animal.reproduction?.currentSireName ?? null,
     },
     inbreedingCoefficient: animal.inbreedingCoefficient ?? 0,
     inbreedingTier: animal.inbreedingTier ?? "none",
@@ -231,6 +240,8 @@ function renderPopulationStats(animals: Animal[]): string {
       <p><strong>Highest Inbreeding:</strong> ${stats.highestInbreedingCoefficient} (${stats.highestInbreedingAnimalName})</p>
       <p><strong>Total Mutations Present:</strong> ${stats.mutationCount}</p>
       <p><strong>Most Common Founder:</strong> ${stats.mostCommonFounderId} (${stats.mostCommonFounderCount})</p>
+      <p><strong>Pregnant Animals:</strong> ${animals.filter((animal) => animal.reproduction?.pregnant).length}</p>
+      <p><strong>Birth-Ready Animals:</strong> ${animals.filter(isReadyToGiveBirth).length}</p>
     </section>
   `;
 }
@@ -275,6 +286,9 @@ function renderSexDevelopment(animal: Animal): string {
       <li><strong>Pregnant:</strong> ${animal.reproduction?.pregnant ? "Yes" : "No"}</li>
       <li><strong>Gestation Progress:</strong> ${
         animal.reproduction?.gestationProgress ?? 0
+      } / 3</li>
+      <li><strong>Current Sire:</strong> ${
+        animal.reproduction?.currentSireName ?? "None"
       }</li>
       <li><strong>Litter Count:</strong> ${animal.reproduction?.litterCount ?? 0}</li>
     </ul>
@@ -368,6 +382,11 @@ function renderAnimal(animal: Animal, animals: Animal[]): string {
       }</p>
       <p><strong>Reproductive Role:</strong> ${
         animal.sex?.reproductiveRole ?? "unknown"
+      }</p>
+      <p><strong>Pregnancy:</strong> ${
+        animal.reproduction?.pregnant
+          ? `Pregnant (${animal.reproduction.gestationProgress}/3) by ${animal.reproduction.currentSireName ?? "Unknown"}`
+          : "Not pregnant"
       }</p>
       <p><strong>Mother:</strong> ${animal.motherName ?? "Founder"}</p>
       <p><strong>Father:</strong> ${animal.fatherName ?? "Founder"}</p>
@@ -523,7 +542,7 @@ function renderApp(
 
   app.innerHTML = `
     <h1>Canidae: Lineages</h1>
-    <h2>Phase 1A - Sex Development System</h2>
+    <h2>Phase 1B - Pregnancy / Gestation System</h2>
 
     <section>
       <p><strong>Species Loaded:</strong> ${species.canids?.length ?? "Unknown"}</p>
@@ -549,6 +568,8 @@ function renderApp(
     <section>
       <button id="saveButton">Save Kennel</button>
       <button id="resetButton">Reset Save</button>
+      <button id="advanceGestationButton">Advance Gestation</button>
+      <button id="birthReadyLittersButton">Birth Ready Litters</button>
     </section>
 
     <hr />
@@ -574,7 +595,7 @@ function renderApp(
 
       <br /><br />
 
-      <button id="breedButton">Breed Selected Pair</button>
+      <button id="breedButton">Start Pregnancy</button>
     </section>
 
     <hr />
@@ -619,13 +640,13 @@ function renderApp(
     <hr />
 
     <section>
-      <h3>Latest Compatibility / Litter / Inbreeding / Sex Validation Info</h3>
+      <h3>Latest Pregnancy / Birth / Validation Info</h3>
       <pre>${JSON.stringify(latestCompatibility, null, 2)}</pre>
     </section>
 
     <section>
-      <h3>Latest Offspring</h3>
-      ${latestOffspring ? renderAnimal(latestOffspring, animals) : "<p>No offspring generated yet.</p>"}
+      <h3>Latest Born Offspring</h3>
+      ${latestOffspring ? renderAnimal(latestOffspring, animals) : "<p>No offspring born yet.</p>"}
     </section>
 
     <hr />
@@ -642,6 +663,8 @@ function renderApp(
   const breedButton = document.querySelector<HTMLButtonElement>("#breedButton");
   const saveButton = document.querySelector<HTMLButtonElement>("#saveButton");
   const resetButton = document.querySelector<HTMLButtonElement>("#resetButton");
+  const advanceGestationButton = document.querySelector<HTMLButtonElement>("#advanceGestationButton");
+  const birthReadyLittersButton = document.querySelector<HTMLButtonElement>("#birthReadyLittersButton");
 
   const searchInput = document.querySelector<HTMLInputElement>("#searchInput");
   const speciesFilter = document.querySelector<HTMLSelectElement>("#speciesFilter");
@@ -657,6 +680,8 @@ function renderApp(
     !breedButton ||
     !saveButton ||
     !resetButton ||
+    !advanceGestationButton ||
+    !birthReadyLittersButton ||
     !searchInput ||
     !speciesFilter ||
     !generationFilter ||
@@ -714,6 +739,98 @@ function renderApp(
       "realistic",
       "Save reset. Founder kennel restored.",
       DEFAULT_FILTERS
+    );
+  });
+
+  advanceGestationButton.addEventListener("click", () => {
+    const advancedAnimals = animals.map(advancePregnancy);
+    saveAnimals(advancedAnimals);
+
+    renderApp(
+      species,
+      traits,
+      breedingRules,
+      mutations,
+      loci,
+      speciesGenotypes,
+      phenotypeRules,
+      advancedAnimals,
+      latestOffspring,
+      {
+        action: "advance_gestation",
+        pregnantAnimals: advancedAnimals.filter((animal) => animal.reproduction.pregnant).length,
+        birthReadyAnimals: advancedAnimals.filter(isReadyToGiveBirth).length,
+      },
+      selectedMode,
+      "Gestation advanced by 1 step.",
+      activeFilters
+    );
+  });
+
+  birthReadyLittersButton.addEventListener("click", () => {
+    let updatedAnimals = [...animals];
+    const newPups: Animal[] = [];
+    const birthReports: any[] = [];
+
+    for (const dam of animals.filter(isReadyToGiveBirth)) {
+      const sire = findAnimalById(updatedAnimals, dam.reproduction.currentSireId);
+
+      if (!sire) {
+        continue;
+      }
+
+      const compatibility = resolveCompatibility(dam, sire, species);
+      const inbreeding = calculateInbreeding(dam, sire, updatedAnimals);
+
+      const litter = createLitter(
+        dam,
+        sire,
+        compatibility,
+        mutations,
+        updatedAnimals,
+        phenotypeRules
+      );
+
+      newPups.push(...litter);
+
+      birthReports.push({
+        dam: dam.name,
+        sire: sire.name,
+        litterSize: litter.length,
+        compatibility,
+        inbreeding,
+      });
+
+      updatedAnimals = updatedAnimals.map((animal) =>
+        animal.id === dam.id ? clearPregnancyAfterBirth(animal) : animal
+      );
+
+      updatedAnimals.push(...litter);
+    }
+
+    saveAnimals(updatedAnimals);
+
+    renderApp(
+      species,
+      traits,
+      breedingRules,
+      mutations,
+      loci,
+      speciesGenotypes,
+      phenotypeRules,
+      updatedAnimals,
+      newPups[newPups.length - 1] ?? null,
+      {
+        action: "birth_ready_litters",
+        littersBorn: birthReports.length,
+        pupsBorn: newPups.length,
+        reports: birthReports,
+      },
+      selectedMode,
+      birthReports.length
+        ? `${birthReports.length} litter(s) born. ${newPups.length} pup(s) added.`
+        : "No animals were ready to give birth.",
+      activeFilters
     );
   });
 
@@ -799,6 +916,30 @@ function renderApp(
       return;
     }
 
+    if (!canBecomePregnant(roleResult.dam)) {
+      renderApp(
+        species,
+        traits,
+        breedingRules,
+        mutations,
+        loci,
+        speciesGenotypes,
+        phenotypeRules,
+        animals,
+        null,
+        {
+          blocked: true,
+          blockedReason: `${roleResult.dam.name} cannot start a new pregnancy right now.`,
+          dam: roleResult.dam.name,
+          pregnant: roleResult.dam.reproduction.pregnant,
+        },
+        mode,
+        saveStatus,
+        activeFilters
+      );
+      return;
+    }
+
     const compatibility = resolveCompatibility(roleResult.dam, roleResult.sire, species);
     const inbreeding = calculateInbreeding(roleResult.dam, roleResult.sire, animals);
 
@@ -830,20 +971,13 @@ function renderApp(
       return;
     }
 
-    const litter = createLitter(
-      roleResult.dam,
-      roleResult.sire,
-      compatibility,
-      mutations,
-      animals,
-      phenotypeRules
+    const updatedAnimals = animals.map((animal) =>
+      animal.id === roleResult.dam.id
+        ? startPregnancy(animal, roleResult.sire)
+        : animal
     );
 
-    roleResult.dam.reproduction.litterCount += 1;
-
-    litter.forEach((pup) => animals.push(pup));
-
-    saveAnimals(animals);
+    saveAnimals(updatedAnimals);
 
     renderApp(
       species,
@@ -853,19 +987,18 @@ function renderApp(
       loci,
       speciesGenotypes,
       phenotypeRules,
-      animals,
-      litter[litter.length - 1] ?? null,
+      updatedAnimals,
+      null,
       {
-        ...compatibility,
-        litterSize: litter.length,
+        action: "pregnancy_started",
+        dam: roleResult.dam.name,
+        sire: roleResult.sire.name,
+        compatibility,
         inbreeding,
-        breedingRoles: {
-          dam: roleResult.dam.name,
-          sire: roleResult.sire.name,
-        },
+        gestationRequired: 3,
       },
       mode,
-      `Litter generated (${litter.length} pups) and kennel auto-saved.`,
+      `${roleResult.dam.name} is now pregnant by ${roleResult.sire.name}.`,
       activeFilters
     );
   });
