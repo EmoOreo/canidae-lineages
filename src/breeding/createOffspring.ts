@@ -11,9 +11,29 @@ import {
 } from "../genetics/genotypeEngine";
 import { evaluatePhenotypeFromGenotype } from "../genetics/phenotypeEngine";
 import { normalizeCarriers } from "../genetics/normalizeCarriers";
+import { inheritHealthProfile } from "../genetics/healthEngine";
+import {
+  applyGeneratedAnomaliesToProfile,
+  generateDevelopmentalAnomalies,
+  inheritDevelopmentalAnomalyProfile,
+} from "../genetics/developmentalAnomalyEngine";
 
 function round(value: number): number {
   return Math.round(value * 100) / 100;
+}
+
+function clamp01(value: number): number {
+  return Math.max(0, Math.min(1, value));
+}
+
+function healthGradeFromOverall(
+  overallHealth: number
+): "excellent" | "good" | "fair" | "poor" | "high_risk" {
+  if (overallHealth >= 0.9) return "excellent";
+  if (overallHealth >= 0.8) return "good";
+  if (overallHealth >= 0.7) return "fair";
+  if (overallHealth >= 0.6) return "poor";
+  return "high_risk";
 }
 
 function createAncestrySnapshot(
@@ -77,7 +97,11 @@ export function createOffspring(
     traitResult.phenotype,
     phenotypeRulesData
   );
-
+  let health = inheritHealthProfile(
+    parentA,
+    parentB,
+    inbreedingResult.coefficient
+  );
   const generation = Math.max(parentA.generation, parentB.generation) + 1;
 
   const averageFertility =
@@ -90,13 +114,15 @@ export function createOffspring(
     averageFertility *
       compatibility.compatibility *
       (1 - compatibility.sterilityChance) *
-      inbreedingResult.fertilityMultiplier
+      inbreedingResult.fertilityMultiplier *
+      Math.max(0.35, health.overallHealth)
   );
 
   const stability = round(
     averageStability *
       compatibility.compatibility *
-      inbreedingResult.stabilityMultiplier
+      inbreedingResult.stabilityMultiplier *
+      Math.max(0.45, health.geneticRobustness)
   );
 
   const mutation = resolveMutation(
@@ -106,6 +132,58 @@ export function createOffspring(
   );
 
   const mutationIds = mutation.mutationApplied ? [mutation.mutationId!] : [];
+
+  let developmentalAnomalyProfile = inheritDevelopmentalAnomalyProfile(
+    parentA,
+    parentB,
+    inbreedingResult.coefficient,
+    compatibility.compatibility,
+    mutationIds.length
+  );
+
+  const sex = createOffspringSexDevelopment();
+  const generatedAnomalies = generateDevelopmentalAnomalies(
+    developmentalAnomalyProfile,
+    sex,
+    inbreedingResult.coefficient,
+    compatibility.compatibility,
+    mutationIds.length
+  );
+
+  developmentalAnomalyProfile = applyGeneratedAnomaliesToProfile(
+    developmentalAnomalyProfile,
+    generatedAnomalies
+  );
+
+  const anomalyFertilityModifier = generatedAnomalies.reduce(
+    (sum, anomaly) => sum + anomaly.fertilityModifier,
+    0
+  );
+  const anomalyHealthModifier = generatedAnomalies.reduce(
+    (sum, anomaly) => sum + anomaly.healthModifier,
+    0
+  );
+  const anomalyStabilityModifier = generatedAnomalies.reduce(
+    (sum, anomaly) => sum + anomaly.stabilityModifier,
+    0
+  );
+
+  if (generatedAnomalies.length > 0) {
+    const adjustedOverallHealth = clamp01(health.overallHealth + anomalyHealthModifier);
+    health = {
+      ...health,
+      overallHealth: round(adjustedOverallHealth),
+      healthGrade: healthGradeFromOverall(adjustedOverallHealth),
+      healthNotes: Array.from(
+        new Set([
+          ...health.healthNotes,
+          ...generatedAnomalies.map(
+            (anomaly) => `${anomaly.label} affects developmental outcome.`
+          ),
+        ])
+      ),
+    };
+  }
 
   genotype.inheritedMutations = Array.from(
     new Set([...genotype.inheritedMutations, ...mutationIds])
@@ -124,7 +202,20 @@ export function createOffspring(
     motherName: parentA.name,
     fatherName: parentB.name,
 
-    sex: createOffspringSexDevelopment(),
+    sex: {
+      ...sex,
+      developmentalAnomalies: Array.from(
+        new Set([
+          ...sex.developmentalAnomalies,
+          ...generatedAnomalies
+            .filter((anomaly) => anomaly.category === "sex_development" || anomaly.id === "cryptorchidism")
+            .map((anomaly) => anomaly.id),
+        ])
+      ),
+      reproductiveRole: generatedAnomalies.some((anomaly) => anomaly.id === "cryptorchidism")
+        ? "limited"
+        : sex.reproductiveRole,
+    },
 
     reproduction: {
       pregnant: false,
@@ -133,6 +224,9 @@ export function createOffspring(
       currentSireId: null,
       currentSireName: null,
     },
+
+    health,
+    developmentalAnomalyProfile,
 
     inbreedingCoefficient: inbreedingResult.coefficient,
     inbreedingTier: inbreedingResult.tier,
@@ -157,8 +251,8 @@ export function createOffspring(
     },
 
     stats: {
-      fertility,
-      stability,
+      fertility: round(Math.max(0, fertility + anomalyFertilityModifier)),
+      stability: round(Math.max(0, stability + anomalyStabilityModifier * 100)),
     },
   };
 }

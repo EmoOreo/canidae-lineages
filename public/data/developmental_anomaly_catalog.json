@@ -1,0 +1,149 @@
+{
+  "version": "0.3.0",
+  "notes": "Congenital anomaly catalog used by Phase 1D.4 anomaly generation and inherited developmental liability. Sex-development DSD entries are reserved for later advanced DSD activation.",
+  "anomalies": [
+    {
+      "id": "cryptorchidism",
+      "label": "Cryptorchidism",
+      "category": "reproductive_development",
+      "severity": "moderate",
+      "fertilityModifier": -0.25,
+      "healthModifier": -0.03,
+      "stabilityModifier": -0.04,
+      "notes": "One or both testes fail to descend; primarily affects sire fertility.",
+      "inheritability": "strong"
+    },
+    {
+      "id": "malocclusion",
+      "label": "Malocclusion",
+      "category": "craniofacial_development",
+      "severity": "moderate",
+      "fertilityModifier": 0,
+      "healthModifier": -0.08,
+      "stabilityModifier": -0.05,
+      "notes": "Jaw or tooth alignment problem that can affect feeding efficiency.",
+      "inheritability": "predisposition"
+    },
+    {
+      "id": "malformed_tail",
+      "label": "Malformed Tail",
+      "category": "axial_skeleton",
+      "severity": "minor",
+      "fertilityModifier": 0,
+      "healthModifier": -0.02,
+      "stabilityModifier": -0.03,
+      "notes": "Kinked, shortened, or malformed tail vertebrae.",
+      "inheritability": "predisposition"
+    },
+    {
+      "id": "polydactyly",
+      "label": "Polydactyly",
+      "category": "limb_development",
+      "severity": "minor",
+      "fertilityModifier": 0,
+      "healthModifier": -0.01,
+      "stabilityModifier": -0.02,
+      "notes": "Extra digit formation; usually survivable but flags developmental noise.",
+      "inheritability": "predisposition"
+    },
+    {
+      "id": "microphthalmia",
+      "label": "Microphthalmia",
+      "category": "ocular_development",
+      "severity": "moderate",
+      "fertilityModifier": 0,
+      "healthModifier": -0.08,
+      "stabilityModifier": -0.07,
+      "notes": "Underdeveloped eye tissue; can affect one or both eyes.",
+      "inheritability": "strong"
+    },
+    {
+      "id": "chondrodysplasia_dwarfism",
+      "label": "Chondrodysplasia / Dwarfism",
+      "category": "skeletal_growth",
+      "severity": "moderate",
+      "fertilityModifier": -0.05,
+      "healthModifier": -0.12,
+      "stabilityModifier": -0.08,
+      "notes": "Disproportionate skeletal growth condition; future structural system can refine this.",
+      "inheritability": "strong"
+    },
+    {
+      "id": "gigantism_overgrowth",
+      "label": "Gigantism / Overgrowth",
+      "category": "skeletal_growth",
+      "severity": "moderate",
+      "fertilityModifier": -0.05,
+      "healthModifier": -0.1,
+      "stabilityModifier": -0.08,
+      "notes": "Excessive growth pattern; can increase cardiac and orthopedic burden.",
+      "inheritability": "predisposition"
+    },
+    {
+      "id": "cleft_palate",
+      "label": "Cleft Palate",
+      "category": "craniofacial_development",
+      "severity": "major",
+      "fertilityModifier": -0.1,
+      "healthModifier": -0.25,
+      "stabilityModifier": -0.18,
+      "notes": "Craniofacial midline defect; severe neonatal survival impact.",
+      "inheritability": "strong"
+    },
+    {
+      "id": "limb_reduction_defect",
+      "label": "Limb Reduction Defect",
+      "category": "limb_development",
+      "severity": "major",
+      "fertilityModifier": -0.1,
+      "healthModifier": -0.2,
+      "stabilityModifier": -0.18,
+      "notes": "Incomplete or malformed limb development; major functional penalty.",
+      "inheritability": "strong"
+    },
+    {
+      "id": "severe_craniofacial_defect",
+      "label": "Severe Craniofacial Defect",
+      "category": "craniofacial_development",
+      "severity": "severe",
+      "fertilityModifier": -0.5,
+      "healthModifier": -0.45,
+      "stabilityModifier": -0.35,
+      "notes": "Severe craniofacial developmental failure; very poor survival outlook.",
+      "inheritability": "strong"
+    },
+    {
+      "id": "nonviable_development",
+      "label": "Nonviable Developmental Disorder",
+      "category": "systemic_development",
+      "severity": "severe",
+      "fertilityModifier": -1,
+      "healthModifier": -0.7,
+      "stabilityModifier": -0.6,
+      "notes": "Severe systemic developmental failure; future neonatal mortality system can consume this.",
+      "inheritability": "strong"
+    },
+    {
+      "id": "xy_gonadal_dysgenesis",
+      "label": "XY Gonadal Dysgenesis",
+      "category": "sex_development",
+      "severity": "major",
+      "fertilityModifier": -0.95,
+      "healthModifier": -0.08,
+      "stabilityModifier": -0.12,
+      "notes": "XY chromosomal pattern with incomplete gonadal development; reserved for later advanced DSD simulation.",
+      "inheritability": "strong"
+    },
+    {
+      "id": "xx_ovotesticular_dsd",
+      "label": "XX Ovotesticular DSD",
+      "category": "sex_development",
+      "severity": "major",
+      "fertilityModifier": -0.75,
+      "healthModifier": -0.05,
+      "stabilityModifier": -0.1,
+      "notes": "XX individual with ovotesticular tissue; reserved for later advanced DSD simulation.",
+      "inheritability": "strong"
+    }
+  ]
+}

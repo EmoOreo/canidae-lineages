@@ -2,6 +2,8 @@ import type { Animal, SexDevelopment, TraitValue } from "../types/animal";
 import { createFounderGenotype } from "./genotypeEngine";
 import { evaluatePhenotypeFromGenotype } from "./phenotypeEngine";
 import { normalizeCarriers } from "./normalizeCarriers";
+import { createFounderHealthProfile } from "./healthEngine";
+import { createFounderDevelopmentalAnomalyProfile } from "./developmentalAnomalyEngine";
 
 function normalizeBodySize(species: any): number {
   const maxMass = species.bodyMassKg?.max ?? 50;
@@ -229,6 +231,8 @@ export function createFounderAnimals(
         phenotypeRulesData
       );
       const recessiveCarriers = createFounderRecessiveCarriers(species);
+      const health = createFounderHealthProfile(species);
+      const developmentalAnomalyProfile = createFounderDevelopmentalAnomalyProfile(species);
 
       const id = getStableFounderId(species.id);
       const reproductiveRole = getFounderReproductiveRole(species.id);
@@ -253,6 +257,9 @@ export function createFounderAnimals(
           currentSireId: null,
           currentSireName: null,
         },
+
+        health,
+        developmentalAnomalyProfile,
 
         inbreedingCoefficient: 0,
         inbreedingTier: "none",

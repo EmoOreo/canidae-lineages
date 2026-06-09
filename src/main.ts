@@ -5,6 +5,8 @@ import { createLitter } from "./breeding/createLitter";
 import { calculateInbreeding } from "./genetics/calculateInbreeding";
 import { normalizeCarriers } from "./genetics/normalizeCarriers";
 import { calculatePopulationStats } from "./stats/calculatePopulationStats";
+import { createFallbackHealthProfile } from "./genetics/healthEngine";
+import { createFallbackDevelopmentalAnomalyProfile } from "./genetics/developmentalAnomalyEngine";
 import {
   advancePregnancy,
   canBecomePregnant,
@@ -41,7 +43,9 @@ async function loadJson(path: string) {
   const response = await fetch(path);
 
   if (!response.ok) {
-    throw new Error(`${path} failed: ${response.status} ${response.statusText}`);
+    throw new Error(
+      `${path} failed: ${response.status} ${response.statusText}`,
+    );
   }
 
   return response.json();
@@ -95,11 +99,17 @@ function migrateIdArray(ids: string[] = []): string[] {
 
 function migrateAnimal(animal: Animal): Animal {
   const lineage = animal.genome?.L ?? animal.ancestry?.lineage ?? {};
-  const parentIds = [animal.motherId, animal.fatherId].filter(Boolean) as string[];
+  const parentIds = [animal.motherId, animal.fatherId].filter(
+    Boolean,
+  ) as string[];
 
   const migratedId = migrateFounderId(animal.id);
-  const migratedMotherId = animal.motherId ? migrateFounderId(animal.motherId) : null;
-  const migratedFatherId = animal.fatherId ? migrateFounderId(animal.fatherId) : null;
+  const migratedMotherId = animal.motherId
+    ? migrateFounderId(animal.motherId)
+    : null;
+  const migratedFatherId = animal.fatherId
+    ? migrateFounderId(animal.fatherId)
+    : null;
 
   return {
     ...animal,
@@ -116,17 +126,25 @@ function migrateAnimal(animal: Animal): Animal {
       currentSireId: animal.reproduction?.currentSireId ?? null,
       currentSireName: animal.reproduction?.currentSireName ?? null,
     },
+    health: animal.health ?? createFallbackHealthProfile(),
+    developmentalAnomalyProfile: {
+      ...createFallbackDevelopmentalAnomalyProfile(),
+      ...(animal.developmentalAnomalyProfile ?? {}),
+      inheritedLiability:
+        animal.developmentalAnomalyProfile?.inheritedLiability ?? 0,
+      inheritedAnomalyLineage:
+        animal.developmentalAnomalyProfile?.inheritedAnomalyLineage ?? [],
+    },
     inbreedingCoefficient: animal.inbreedingCoefficient ?? 0,
     inbreedingTier: animal.inbreedingTier ?? "none",
     genotype: animal.genotype ?? createFallbackGenotype(animal),
     ancestry: {
       parentIds: migrateIdArray(animal.ancestry?.parentIds ?? parentIds),
-      founderIds:
-        animal.ancestry?.founderIds?.length
-          ? migrateIdArray(animal.ancestry.founderIds)
-          : animal.generation === 0
-            ? [migratedId]
-            : [],
+      founderIds: animal.ancestry?.founderIds?.length
+        ? migrateIdArray(animal.ancestry.founderIds)
+        : animal.generation === 0
+          ? [migratedId]
+          : [],
       ancestorIds: migrateIdArray(animal.ancestry?.ancestorIds ?? parentIds),
       lineage,
     },
@@ -174,17 +192,23 @@ function getSexSymbol(animal: Animal): string {
 }
 
 function canServeAsDam(animal: Animal): boolean {
-  return animal.sex?.reproductiveRole === "dam" || animal.sex?.reproductiveRole === "limited";
+  return (
+    animal.sex?.reproductiveRole === "dam" ||
+    animal.sex?.reproductiveRole === "limited"
+  );
 }
 
 function canServeAsSire(animal: Animal): boolean {
-  return animal.sex?.reproductiveRole === "sire" || animal.sex?.reproductiveRole === "limited";
+  return (
+    animal.sex?.reproductiveRole === "sire" ||
+    animal.sex?.reproductiveRole === "limited"
+  );
 }
 
 function resolveBreedingRoles(
   selectedA: Animal,
   selectedB: Animal,
-  mode: BreedMode
+  mode: BreedMode,
 ): {
   dam: Animal;
   sire: Animal;
@@ -242,13 +266,38 @@ function renderPopulationStats(animals: Animal[]): string {
       <p><strong>Most Common Founder:</strong> ${stats.mostCommonFounderId} (${stats.mostCommonFounderCount})</p>
       <p><strong>Pregnant Animals:</strong> ${animals.filter((animal) => animal.reproduction?.pregnant).length}</p>
       <p><strong>Birth-Ready Animals:</strong> ${animals.filter(isReadyToGiveBirth).length}</p>
+      <p><strong>Average Overall Health:</strong> ${
+        animals.length
+          ? Math.round(
+              (animals.reduce(
+                (sum, animal) => sum + (animal.health?.overallHealth ?? 0.7),
+                0,
+              ) /
+                animals.length) *
+                100,
+            ) / 100
+          : 0
+      }</p>
+      <p><strong>Lowest Health Grade:</strong> ${animals.reduce(
+        (lowest, animal) => {
+          const order = ["excellent", "good", "fair", "poor", "high_risk"];
+          const currentGrade = animal.health?.healthGrade ?? "good";
+          return order.indexOf(currentGrade) > order.indexOf(lowest)
+            ? currentGrade
+            : lowest;
+        },
+        "excellent",
+      )}</p>
     </section>
   `;
 }
 
 function renderPhenotype(phenotype: Record<string, unknown>): string {
   return Object.entries(phenotype)
-    .map(([key, value]) => `<li><strong>${key}:</strong> ${JSON.stringify(value)}</li>`)
+    .map(
+      ([key, value]) =>
+        `<li><strong>${key}:</strong> ${JSON.stringify(value)}</li>`,
+    )
     .join("");
 }
 
@@ -264,9 +313,57 @@ function renderGenotype(genotype: Genotype): string {
       ${Object.entries(loci)
         .map(
           ([locus, pair]) =>
-            `<li><strong>${locus}:</strong> ${pair.maternal} / ${pair.paternal}</li>`
+            `<li><strong>${locus}:</strong> ${pair.maternal} / ${pair.paternal}</li>`,
         )
         .join("")}
+    </ul>
+  `;
+}
+
+function renderHealthProfile(animal: Animal): string {
+  const health = animal.health ?? createFallbackHealthProfile();
+
+  return `
+    <ul>
+      <li><strong>Overall Health:</strong> ${health.overallHealth}</li>
+      <li><strong>Health Grade:</strong> ${health.healthGrade}</li>
+      <li><strong>Genetic Robustness:</strong> ${health.geneticRobustness}</li>
+      <li><strong>Longevity Potential:</strong> ${health.longevityPotential}</li>
+      <li><strong>Hip Dysplasia Liability:</strong> ${health.hipDysplasiaLiability}</li>
+      <li><strong>Elbow Dysplasia Liability:</strong> ${health.elbowDysplasiaLiability}</li>
+      <li><strong>Cardiac Liability:</strong> ${health.cardiacLiability}</li>
+      <li><strong>Respiratory Liability:</strong> ${health.respiratoryLiability}</li>
+      <li><strong>Immune Fragility:</strong> ${health.immuneFragility}</li>
+      <li><strong>Neurological Liability:</strong> ${health.neurologicalLiability}</li>
+      <li><strong>Dental Liability:</strong> ${health.dentalLiability}</li>
+      <li><strong>Cancer Susceptibility:</strong> ${health.cancerSusceptibility}</li>
+      <li><strong>Health Notes:</strong> ${health.healthNotes?.length ? health.healthNotes.join(" ") : "None"}</li>
+    </ul>
+  `;
+}
+
+function renderDevelopmentalAnomalyProfile(animal: Animal): string {
+  const profile =
+    animal.developmentalAnomalyProfile ??
+    createFallbackDevelopmentalAnomalyProfile();
+
+  return `
+    <ul>
+      <li><strong>Developmental Stability:</strong> ${profile.developmentalStability}</li>
+      <li><strong>Developmental Risk Score:</strong> ${profile.riskScore}</li>
+      <li><strong>Inherited Developmental Liability:</strong> ${profile.inheritedLiability ?? 0}</li>
+      <li><strong>Inherited Anomaly Lineage:</strong> ${
+        profile.inheritedAnomalyLineage?.length
+          ? profile.inheritedAnomalyLineage.join(", ")
+          : "None"
+      }</li>
+      <li><strong>Risk Factors:</strong> ${
+        profile.riskFactors?.length ? profile.riskFactors.join(" ") : "None"
+      }</li>
+      <li><strong>Catalog Version:</strong> ${profile.catalogVersion ?? "0.1.0"}</li>
+      <li><strong>Anomalies:</strong> ${
+        profile.anomalies.length ? profile.anomalies.join(", ") : "None"
+      }</li>
     </ul>
   `;
 }
@@ -296,11 +393,15 @@ function renderSexDevelopment(animal: Animal): string {
 }
 
 function getLegacyTraitCarriers(animal: Animal): string[] {
-  return (animal.genome.R ?? []).filter((carrier) => carrier.startsWith("trait_"));
+  return (animal.genome.R ?? []).filter((carrier) =>
+    carrier.startsWith("trait_"),
+  );
 }
 
 function getGenotypeCarriers(animal: Animal): string[] {
-  return (animal.genome.R ?? []).filter((carrier) => !carrier.startsWith("trait_"));
+  return (animal.genome.R ?? []).filter(
+    (carrier) => !carrier.startsWith("trait_"),
+  );
 }
 
 function renderCarrierSummary(animal: Animal): string {
@@ -340,7 +441,12 @@ function findAnimalById(animals: Animal[], id: string | null): Animal | null {
   return animals.find((animal) => animal.id === id) ?? null;
 }
 
-function renderPedigree(animal: Animal, animals: Animal[], depth = 0, maxDepth = 3): string {
+function renderPedigree(
+  animal: Animal,
+  animals: Animal[],
+  depth = 0,
+  maxDepth = 3,
+): string {
   const indent = "&nbsp;".repeat(depth * 4);
   const label = `${indent}${depth === 0 ? "" : "└─ "}${animal.name} (${animal.speciesId})`;
 
@@ -388,6 +494,22 @@ function renderAnimal(animal: Animal, animals: Animal[]): string {
           ? `Pregnant (${animal.reproduction.gestationProgress}/3) by ${animal.reproduction.currentSireName ?? "Unknown"}`
           : "Not pregnant"
       }</p>
+      <p><strong>Overall Health:</strong> ${animal.health?.overallHealth ?? "Unknown"} (${animal.health?.healthGrade ?? "unknown"})</p>
+      <p><strong>Genetic Robustness:</strong> ${animal.health?.geneticRobustness ?? "Unknown"}</p>
+      <p><strong>Developmental Stability:</strong> ${
+        animal.developmentalAnomalyProfile?.developmentalStability ?? "Unknown"
+      }</p>
+      <p><strong>Developmental Risk:</strong> ${
+        animal.developmentalAnomalyProfile?.riskScore ?? "Unknown"
+      }</p>
+      <p><strong>Inherited Developmental Liability:</strong> ${
+        animal.developmentalAnomalyProfile?.inheritedLiability ?? 0
+      }</p>
+      <p><strong>Generated Anomalies:</strong> ${
+        animal.developmentalAnomalyProfile?.anomalies?.length
+          ? animal.developmentalAnomalyProfile.anomalies.join(", ")
+          : "None"
+      }</p>
       <p><strong>Mother:</strong> ${animal.motherName ?? "Founder"}</p>
       <p><strong>Father:</strong> ${animal.fatherName ?? "Founder"}</p>
       <p><strong>Inbreeding Coefficient:</strong> ${animal.inbreedingCoefficient ?? 0}</p>
@@ -417,6 +539,16 @@ function renderAnimal(animal: Animal, animals: Animal[]): string {
       </details>
 
       <details>
+        <summary>Health Profile</summary>
+        ${renderHealthProfile(animal)}
+      </details>
+
+      <details>
+        <summary>Developmental Anomaly Profile</summary>
+        ${renderDevelopmentalAnomalyProfile(animal)}
+      </details>
+
+      <details>
         <summary>Genotype</summary>
         ${renderGenotype(animal.genotype)}
       </details>
@@ -438,10 +570,29 @@ function renderAnimal(animal: Animal, animals: Animal[]): string {
 
 function renderAnimalOptions(animals: Animal[]): string {
   return animals
-    .map(
-      (animal) =>
-        `<option value="${animal.id}">${animal.name} ${getSexSymbol(animal)} — ${animal.speciesId}</option>`
-    )
+    .map((animal) => {
+      const health = Math.round(
+        (animal.health?.overallHealth ?? 0.7) * 100,
+      );
+
+      const anomalyFlag =
+        animal.developmentalAnomalyProfile?.anomalies?.length
+          ? " 🧬"
+          : "";
+
+      const idSuffix = animal.id.slice(-5);
+
+      return `
+        <option value="${animal.id}">
+          ${animal.name}
+          ${getSexSymbol(animal)}
+          [${idSuffix}]
+          H:${health}
+          ${anomalyFlag}
+          — ${animal.speciesId}
+        </option>
+      `;
+    })
     .join("");
 }
 
@@ -451,11 +602,14 @@ function getUniqueSpecies(animals: Animal[]): string[] {
 
 function getUniqueGenerations(animals: Animal[]): number[] {
   return Array.from(new Set(animals.map((animal) => animal.generation))).sort(
-    (a, b) => a - b
+    (a, b) => a - b,
   );
 }
 
-function applyKennelFilters(animals: Animal[], filters: KennelFilters): Animal[] {
+function applyKennelFilters(
+  animals: Animal[],
+  filters: KennelFilters,
+): Animal[] {
   let result = [...animals];
 
   const search = filters.search.trim().toLowerCase();
@@ -467,7 +621,11 @@ function applyKennelFilters(animals: Animal[], filters: KennelFilters): Animal[]
         animal.speciesId.toLowerCase().includes(search) ||
         animal.id.toLowerCase().includes(search) ||
         (animal.inbreedingTier ?? "none").toLowerCase().includes(search) ||
-        (animal.sex?.reproductiveRole ?? "").toLowerCase().includes(search)
+        (animal.sex?.reproductiveRole ?? "").toLowerCase().includes(search) ||
+        (animal.health?.healthGrade ?? "").toLowerCase().includes(search) ||
+        (animal.developmentalAnomalyProfile?.anomalies ?? []).some(
+          (anomalyId) => anomalyId.toLowerCase().includes(search),
+        ),
     );
   }
 
@@ -482,35 +640,44 @@ function applyKennelFilters(animals: Animal[], filters: KennelFilters): Animal[]
 
   result.sort((a, b) => {
     if (filters.sort === "generation") return b.generation - a.generation;
-    if (filters.sort === "fertility") return b.stats.fertility - a.stats.fertility;
-    if (filters.sort === "stability") return b.stats.stability - a.stats.stability;
-    if (filters.sort === "mutations") return b.genome.M.length - a.genome.M.length;
+    if (filters.sort === "fertility")
+      return b.stats.fertility - a.stats.fertility;
+    if (filters.sort === "stability")
+      return b.stats.stability - a.stats.stability;
+    if (filters.sort === "mutations")
+      return b.genome.M.length - a.genome.M.length;
     return a.name.localeCompare(b.name);
   });
 
   return result;
 }
 
-function renderSpeciesFilterOptions(animals: Animal[], selected: string): string {
+function renderSpeciesFilterOptions(
+  animals: Animal[],
+  selected: string,
+): string {
   return [
     `<option value="all" ${selected === "all" ? "selected" : ""}>All Species</option>`,
     ...getUniqueSpecies(animals).map(
       (speciesId) =>
         `<option value="${speciesId}" ${
           selected === speciesId ? "selected" : ""
-        }>${speciesId}</option>`
+        }>${speciesId}</option>`,
     ),
   ].join("");
 }
 
-function renderGenerationFilterOptions(animals: Animal[], selected: string): string {
+function renderGenerationFilterOptions(
+  animals: Animal[],
+  selected: string,
+): string {
   return [
     `<option value="all" ${selected === "all" ? "selected" : ""}>All Generations</option>`,
     ...getUniqueGenerations(animals).map(
       (generation) =>
         `<option value="${generation}" ${
           selected === String(generation) ? "selected" : ""
-        }>Generation ${generation}</option>`
+        }>Generation ${generation}</option>`,
     ),
   ].join("");
 }
@@ -528,7 +695,7 @@ function renderApp(
   latestCompatibility: any = null,
   selectedMode: BreedMode = "realistic",
   saveStatus = "Loaded.",
-  filters: KennelFilters = DEFAULT_FILTERS
+  filters: KennelFilters = DEFAULT_FILTERS,
 ) {
   const app = document.querySelector<HTMLDivElement>("#app");
 
@@ -542,7 +709,7 @@ function renderApp(
 
   app.innerHTML = `
     <h1>Canidae: Lineages</h1>
-    <h2>Phase 1B - Pregnancy / Gestation System</h2>
+    <h2>Phase 1D.2a/1D.3 - Extinct Reconstruction / Anomaly Generation</h2>
 
     <section>
       <p><strong>Species Loaded:</strong> ${species.canids?.length ?? "Unknown"}</p>
@@ -604,7 +771,7 @@ function renderApp(
       <h3>Kennel Management</h3>
 
       <label for="searchInput">Search</label><br />
-      <input id="searchInput" type="text" value="${activeFilters.search}" placeholder="Search name, species, ID, role, or inbreeding tier" />
+      <input id="searchInput" type="text" value="${activeFilters.search}" placeholder="Search name, species, ID, role, health grade, or inbreeding tier" />
 
       <br /><br />
 
@@ -637,6 +804,12 @@ function renderApp(
       <button id="clearFiltersButton">Clear Filters</button>
     </section>
 
+    <section>
+      <h3>View Controls</h3>
+      <button id="expandAllDetailsButton">Expand All Details</button>
+      <button id="collapseAllDetailsButton">Collapse All Details</button>
+    </section>
+
     <hr />
 
     <section>
@@ -663,15 +836,31 @@ function renderApp(
   const breedButton = document.querySelector<HTMLButtonElement>("#breedButton");
   const saveButton = document.querySelector<HTMLButtonElement>("#saveButton");
   const resetButton = document.querySelector<HTMLButtonElement>("#resetButton");
-  const advanceGestationButton = document.querySelector<HTMLButtonElement>("#advanceGestationButton");
-  const birthReadyLittersButton = document.querySelector<HTMLButtonElement>("#birthReadyLittersButton");
+  const advanceGestationButton = document.querySelector<HTMLButtonElement>(
+    "#advanceGestationButton",
+  );
+  const birthReadyLittersButton = document.querySelector<HTMLButtonElement>(
+    "#birthReadyLittersButton",
+  );
 
   const searchInput = document.querySelector<HTMLInputElement>("#searchInput");
-  const speciesFilter = document.querySelector<HTMLSelectElement>("#speciesFilter");
-  const generationFilter = document.querySelector<HTMLSelectElement>("#generationFilter");
+  const speciesFilter =
+    document.querySelector<HTMLSelectElement>("#speciesFilter");
+  const generationFilter =
+    document.querySelector<HTMLSelectElement>("#generationFilter");
   const sortFilter = document.querySelector<HTMLSelectElement>("#sortFilter");
-  const applyFiltersButton = document.querySelector<HTMLButtonElement>("#applyFiltersButton");
-  const clearFiltersButton = document.querySelector<HTMLButtonElement>("#clearFiltersButton");
+  const applyFiltersButton = document.querySelector<HTMLButtonElement>(
+    "#applyFiltersButton",
+  );
+  const clearFiltersButton = document.querySelector<HTMLButtonElement>(
+    "#clearFiltersButton",
+  );
+  const expandAllDetailsButton = document.querySelector<HTMLButtonElement>(
+    "#expandAllDetailsButton",
+  );
+  const collapseAllDetailsButton = document.querySelector<HTMLButtonElement>(
+    "#collapseAllDetailsButton",
+  );
 
   if (
     !parentASelect ||
@@ -687,7 +876,9 @@ function renderApp(
     !generationFilter ||
     !sortFilter ||
     !applyFiltersButton ||
-    !clearFiltersButton
+    !clearFiltersButton ||
+    !expandAllDetailsButton ||
+    !collapseAllDetailsButton
   ) {
     return;
   }
@@ -712,7 +903,7 @@ function renderApp(
       latestCompatibility,
       selectedMode,
       "Kennel saved.",
-      activeFilters
+      activeFilters,
     );
   });
 
@@ -722,7 +913,7 @@ function renderApp(
     const resetAnimals = createFounderAnimals(
       species,
       speciesGenotypes,
-      phenotypeRules
+      phenotypeRules,
     );
 
     renderApp(
@@ -738,7 +929,7 @@ function renderApp(
       null,
       "realistic",
       "Save reset. Founder kennel restored.",
-      DEFAULT_FILTERS
+      DEFAULT_FILTERS,
     );
   });
 
@@ -758,12 +949,14 @@ function renderApp(
       latestOffspring,
       {
         action: "advance_gestation",
-        pregnantAnimals: advancedAnimals.filter((animal) => animal.reproduction.pregnant).length,
+        pregnantAnimals: advancedAnimals.filter(
+          (animal) => animal.reproduction.pregnant,
+        ).length,
         birthReadyAnimals: advancedAnimals.filter(isReadyToGiveBirth).length,
       },
       selectedMode,
       "Gestation advanced by 1 step.",
-      activeFilters
+      activeFilters,
     );
   });
 
@@ -773,7 +966,10 @@ function renderApp(
     const birthReports: any[] = [];
 
     for (const dam of animals.filter(isReadyToGiveBirth)) {
-      const sire = findAnimalById(updatedAnimals, dam.reproduction.currentSireId);
+      const sire = findAnimalById(
+        updatedAnimals,
+        dam.reproduction.currentSireId,
+      );
 
       if (!sire) {
         continue;
@@ -788,7 +984,7 @@ function renderApp(
         compatibility,
         mutations,
         updatedAnimals,
-        phenotypeRules
+        phenotypeRules,
       );
 
       newPups.push(...litter);
@@ -802,7 +998,7 @@ function renderApp(
       });
 
       updatedAnimals = updatedAnimals.map((animal) =>
-        animal.id === dam.id ? clearPregnancyAfterBirth(animal) : animal
+        animal.id === dam.id ? clearPregnancyAfterBirth(animal) : animal,
       );
 
       updatedAnimals.push(...litter);
@@ -830,7 +1026,7 @@ function renderApp(
       birthReports.length
         ? `${birthReports.length} litter(s) born. ${newPups.length} pup(s) added.`
         : "No animals were ready to give birth.",
-      activeFilters
+      activeFilters,
     );
   });
 
@@ -853,7 +1049,7 @@ function renderApp(
         species: speciesFilter.value,
         generation: generationFilter.value,
         sort: sortFilter.value as SortMode,
-      }
+      },
     );
   });
 
@@ -871,13 +1067,29 @@ function renderApp(
       latestCompatibility,
       selectedMode,
       saveStatus,
-      DEFAULT_FILTERS
+      DEFAULT_FILTERS,
     );
   });
 
+  expandAllDetailsButton.addEventListener("click", () => {
+    document.querySelectorAll("details").forEach((element) => {
+      (element as HTMLDetailsElement).open = true;
+    });
+  });
+
+  collapseAllDetailsButton.addEventListener("click", () => {
+    document.querySelectorAll("details").forEach((element) => {
+      (element as HTMLDetailsElement).open = false;
+    });
+  });
+
   breedButton.addEventListener("click", () => {
-    const selectedA = animals.find((animal) => animal.id === parentASelect.value);
-    const selectedB = animals.find((animal) => animal.id === parentBSelect.value);
+    const selectedA = animals.find(
+      (animal) => animal.id === parentASelect.value,
+    );
+    const selectedB = animals.find(
+      (animal) => animal.id === parentBSelect.value,
+    );
     const mode = modeSelect.value as BreedMode;
 
     if (!selectedA || !selectedB) return;
@@ -911,7 +1123,7 @@ function renderApp(
         },
         mode,
         saveStatus,
-        activeFilters
+        activeFilters,
       );
       return;
     }
@@ -935,13 +1147,21 @@ function renderApp(
         },
         mode,
         saveStatus,
-        activeFilters
+        activeFilters,
       );
       return;
     }
 
-    const compatibility = resolveCompatibility(roleResult.dam, roleResult.sire, species);
-    const inbreeding = calculateInbreeding(roleResult.dam, roleResult.sire, animals);
+    const compatibility = resolveCompatibility(
+      roleResult.dam,
+      roleResult.sire,
+      species,
+    );
+    const inbreeding = calculateInbreeding(
+      roleResult.dam,
+      roleResult.sire,
+      animals,
+    );
 
     if (mode === "realistic" && !compatibility.realisticAllowed) {
       renderApp(
@@ -962,11 +1182,12 @@ function renderApp(
             sire: roleResult.sire.name,
           },
           blocked: true,
-          blockedReason: "This pairing is blocked in Realistic Mode. Try Sandbox Mode.",
+          blockedReason:
+            "This pairing is blocked in Realistic Mode. Try Sandbox Mode.",
         },
         mode,
         saveStatus,
-        activeFilters
+        activeFilters,
       );
       return;
     }
@@ -974,7 +1195,7 @@ function renderApp(
     const updatedAnimals = animals.map((animal) =>
       animal.id === roleResult.dam.id
         ? startPregnancy(animal, roleResult.sire)
-        : animal
+        : animal,
     );
 
     saveAnimals(updatedAnimals);
@@ -999,7 +1220,7 @@ function renderApp(
       },
       mode,
       `${roleResult.dam.name} is now pregnant by ${roleResult.sire.name}.`,
-      activeFilters
+      activeFilters,
     );
   });
 }
@@ -1051,7 +1272,7 @@ async function bootstrap() {
       null,
       "realistic",
       "Loaded.",
-      DEFAULT_FILTERS
+      DEFAULT_FILTERS,
     );
   } catch (error) {
     app.innerHTML = `

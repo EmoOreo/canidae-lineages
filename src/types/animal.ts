@@ -46,6 +46,57 @@ export interface ReproductionState {
   currentSireName: string | null;
 }
 
+export type HealthGrade = "excellent" | "good" | "fair" | "poor" | "high_risk";
+
+export interface PolygenicHealthProfile {
+  hipDysplasiaLiability: number;
+  elbowDysplasiaLiability: number;
+  cardiacLiability: number;
+  respiratoryLiability: number;
+  immuneFragility: number;
+  neurologicalLiability: number;
+  dentalLiability: number;
+  cancerSusceptibility: number;
+  longevityPotential: number;
+  geneticRobustness: number;
+  overallHealth: number;
+  healthGrade: HealthGrade;
+  healthNotes: string[];
+}
+
+export type DevelopmentalAnomalySeverity =
+  | "minor"
+  | "moderate"
+  | "major"
+  | "severe";
+
+export type DevelopmentalAnomalyInheritability =
+  | "none"
+  | "predisposition"
+  | "strong";
+
+export interface DevelopmentalAnomalyRecord {
+  id: string;
+  label: string;
+  category: string;
+  severity: DevelopmentalAnomalySeverity;
+  fertilityModifier: number;
+  healthModifier: number;
+  stabilityModifier: number;
+  inheritability: DevelopmentalAnomalyInheritability;
+  notes: string;
+}
+
+export interface DevelopmentalAnomalyProfile {
+  anomalies: string[];
+  riskScore: number;
+  developmentalStability: number;
+  inheritedLiability: number;
+  inheritedAnomalyLineage: string[];
+  riskFactors: string[];
+  catalogVersion: string;
+}
+
 export interface Animal {
   id: string;
   name: string;
@@ -59,6 +110,8 @@ export interface Animal {
 
   sex: SexDevelopment;
   reproduction: ReproductionState;
+  health: PolygenicHealthProfile;
+  developmentalAnomalyProfile: DevelopmentalAnomalyProfile;
 
   inbreedingCoefficient: number;
   inbreedingTier: "none" | "low" | "moderate" | "high" | "severe";
