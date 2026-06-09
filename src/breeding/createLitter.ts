@@ -57,7 +57,8 @@ export function createLitter(
   parentB: Animal,
   compatibility: CompatibilityResult,
   mutationData: any,
-  animals: Animal[]
+  animals: Animal[],
+  phenotypeRulesData: any
 ): Animal[] {
   const inbreedingResult = calculateInbreeding(parentA, parentB, animals);
 
@@ -77,7 +78,8 @@ export function createLitter(
         parentB,
         compatibility,
         mutationData,
-        inbreedingResult
+        inbreedingResult,
+        phenotypeRulesData
       )
     );
   }

@@ -3,6 +3,8 @@ import { createFounderAnimals } from "./genetics/createFounderAnimals";
 import { resolveCompatibility } from "./breeding/resolveCompatibility";
 import { createLitter } from "./breeding/createLitter";
 import { calculateInbreeding } from "./genetics/calculateInbreeding";
+import { normalizeCarriers } from "./genetics/normalizeCarriers";
+import { calculatePopulationStats } from "./stats/calculatePopulationStats";
 import type { Animal, Genotype } from "./types/animal";
 
 const SAVE_KEY = "canidae-lineages-save-v1";
@@ -45,25 +47,56 @@ function createFallbackGenotype(animal: Animal): Genotype {
   };
 }
 
+function migrateFounderId(id: string): string {
+  const idMap: Record<string, string> = {
+    founder_0: "founder_domestic_dog_alpha",
+    founder_1: "founder_gray_wolf_alpha",
+    founder_2: "founder_coyote_alpha",
+    founder_3: "founder_red_fox_alpha",
+    founder_4: "founder_fennec_fox_alpha",
+    founder_5: "founder_dire_wolf_alpha",
+  };
+
+  return idMap[id] ?? id;
+}
+
+function migrateIdArray(ids: string[] = []): string[] {
+  return Array.from(new Set(ids.map(migrateFounderId)));
+}
+
 function migrateAnimal(animal: Animal): Animal {
   const lineage = animal.genome?.L ?? animal.ancestry?.lineage ?? {};
+  const parentIds = [animal.motherId, animal.fatherId].filter(Boolean) as string[];
+
+  const migratedId = migrateFounderId(animal.id);
+  const migratedMotherId = animal.motherId ? migrateFounderId(animal.motherId) : null;
+  const migratedFatherId = animal.fatherId ? migrateFounderId(animal.fatherId) : null;
 
   return {
     ...animal,
-    motherId: animal.motherId ?? null,
-    fatherId: animal.fatherId ?? null,
+    id: migratedId,
+    motherId: migratedMotherId,
+    fatherId: migratedFatherId,
     motherName: animal.motherName ?? null,
     fatherName: animal.fatherName ?? null,
     inbreedingCoefficient: animal.inbreedingCoefficient ?? 0,
     inbreedingTier: animal.inbreedingTier ?? "none",
     genotype: animal.genotype ?? createFallbackGenotype(animal),
-    ancestry: animal.ancestry ?? {
-      parentIds: [animal.motherId, animal.fatherId].filter(Boolean) as string[],
+    ancestry: {
+      parentIds: migrateIdArray(animal.ancestry?.parentIds ?? parentIds),
       founderIds:
-        animal.generation === 0
-          ? [animal.id]
-          : [],
+        animal.ancestry?.founderIds?.length
+          ? migrateIdArray(animal.ancestry.founderIds)
+          : animal.generation === 0
+            ? [migratedId]
+            : [],
+      ancestorIds: migrateIdArray(animal.ancestry?.ancestorIds ?? parentIds),
       lineage,
+    },
+    genome: {
+      ...(animal.genome ?? { D: [], R: [], M: [], L: lineage }),
+      R: normalizeCarriers(animal.genome?.R ?? []),
+      L: lineage,
     },
     phenotype: {
       ...(animal.phenotype ?? {}),
@@ -96,6 +129,23 @@ function clearSave() {
   localStorage.removeItem(SAVE_KEY);
 }
 
+function renderPopulationStats(animals: Animal[]): string {
+  const stats = calculatePopulationStats(animals);
+
+  return `
+    <section>
+      <h3>Population Statistics</h3>
+      <p><strong>Population Size:</strong> ${stats.populationSize}</p>
+      <p><strong>Species Represented:</strong> ${stats.speciesRepresented}</p>
+      <p><strong>Average Fertility:</strong> ${stats.averageFertility}</p>
+      <p><strong>Average Stability:</strong> ${stats.averageStability}</p>
+      <p><strong>Highest Inbreeding:</strong> ${stats.highestInbreedingCoefficient} (${stats.highestInbreedingAnimalName})</p>
+      <p><strong>Total Mutations Present:</strong> ${stats.mutationCount}</p>
+      <p><strong>Most Common Founder:</strong> ${stats.mostCommonFounderId} (${stats.mostCommonFounderCount})</p>
+    </section>
+  `;
+}
+
 function renderPhenotype(phenotype: Record<string, unknown>): string {
   return Object.entries(phenotype)
     .map(([key, value]) => `<li><strong>${key}:</strong> ${JSON.stringify(value)}</li>`)
@@ -118,6 +168,46 @@ function renderGenotype(genotype: Genotype): string {
         )
         .join("")}
     </ul>
+  `;
+}
+
+function getLegacyTraitCarriers(animal: Animal): string[] {
+  return (animal.genome.R ?? []).filter((carrier) => carrier.startsWith("trait_"));
+}
+
+function getGenotypeCarriers(animal: Animal): string[] {
+  return (animal.genome.R ?? []).filter((carrier) => !carrier.startsWith("trait_"));
+}
+
+function renderCarrierSummary(animal: Animal): string {
+  const legacyTraitCarriers = getLegacyTraitCarriers(animal);
+  const genotypeCarriers = getGenotypeCarriers(animal);
+
+  return `
+    <p><strong>Hidden Trait Carriers:</strong> ${
+      legacyTraitCarriers.length ? legacyTraitCarriers.length : "None"
+    }</p>
+    <p><strong>Genotype Carrier Loci:</strong> ${
+      genotypeCarriers.length ? genotypeCarriers.length : "None"
+    }</p>
+
+    <details>
+      <summary>Carrier Details</summary>
+
+      <h5>Hidden Trait Carriers</h5>
+      ${
+        legacyTraitCarriers.length
+          ? `<ul>${legacyTraitCarriers.map((carrier) => `<li>${carrier}</li>`).join("")}</ul>`
+          : "<p>None</p>"
+      }
+
+      <h5>Genotype Carrier Loci</h5>
+      ${
+        genotypeCarriers.length
+          ? `<ul>${genotypeCarriers.map((carrier) => `<li>${carrier}</li>`).join("")}</ul>`
+          : "<p>None</p>"
+      }
+    </details>
   `;
 }
 
@@ -168,9 +258,7 @@ function renderAnimal(animal: Animal, animals: Animal[]): string {
       <p><strong>Inbreeding Coefficient:</strong> ${animal.inbreedingCoefficient ?? 0}</p>
       <p><strong>Inbreeding Tier:</strong> ${animal.inbreedingTier ?? "none"}</p>
       <p><strong>D Traits:</strong> ${animal.genome.D.length}</p>
-      <p><strong>R Carriers:</strong> ${
-        animal.genome.R.length ? animal.genome.R.join(", ") : "None"
-      }</p>
+      ${renderCarrierSummary(animal)}
       <p><strong>M Mutations:</strong> ${
         animal.genome.M.length ? animal.genome.M.join(", ") : "None"
       }</p>
@@ -181,6 +269,11 @@ function renderAnimal(animal: Animal, animals: Animal[]): string {
         animal.ancestry?.founderIds?.length
           ? animal.ancestry.founderIds.join(", ")
           : "Unknown"
+      }</p>
+      <p><strong>Cached Ancestor IDs:</strong> ${
+        animal.ancestry?.ancestorIds?.length
+          ? animal.ancestry.ancestorIds.join(", ")
+          : "None"
       }</p>
 
       <details>
@@ -283,6 +376,9 @@ function renderApp(
   traits: any,
   breedingRules: any,
   mutations: any,
+  loci: any,
+  speciesGenotypes: any,
+  phenotypeRules: any,
   animals: Animal[],
   latestOffspring: Animal | null = null,
   latestCompatibility: any = null,
@@ -302,7 +398,7 @@ function renderApp(
 
   app.innerHTML = `
     <h1>Canidae: Lineages</h1>
-    <h2>Architecture Lock 0A - Genotype / Phenotype / Ancestry Foundation</h2>
+    <h2>Phase 0E/0F/0G - Carrier Normalization, Population Stats, Stable Founder IDs</h2>
 
     <section>
       <p><strong>Species Loaded:</strong> ${species.canids?.length ?? "Unknown"}</p>
@@ -311,10 +407,19 @@ function renderApp(
       <p><strong>Mutation Catalog:</strong> ${
         mutations.mutations?.length ?? "Unknown"
       } mutations loaded</p>
+      <p><strong>Loci Loaded:</strong> ${Object.keys(loci.loci ?? {}).length}</p>
+      <p><strong>Species Genotype Templates:</strong> ${
+        Object.keys(speciesGenotypes.founderGenotypes ?? {}).length
+      }</p>
+      <p><strong>Phenotype Rules:</strong> ${
+        phenotypeRules.rules?.length ?? 0
+      }</p>
       <p><strong>Animals in Kennel:</strong> ${animals.length}</p>
       <p><strong>Visible Animals:</strong> ${visibleAnimals.length}</p>
       <p><strong>Save Status:</strong> ${saveStatus}</p>
     </section>
+
+    ${renderPopulationStats(animals)}
 
     <section>
       <button id="saveButton">Save Kennel</button>
@@ -449,6 +554,9 @@ function renderApp(
       traits,
       breedingRules,
       mutations,
+      loci,
+      speciesGenotypes,
+      phenotypeRules,
       animals,
       latestOffspring,
       latestCompatibility,
@@ -461,13 +569,20 @@ function renderApp(
   resetButton.addEventListener("click", () => {
     clearSave();
 
-    const resetAnimals = createFounderAnimals(species);
+    const resetAnimals = createFounderAnimals(
+      species,
+      speciesGenotypes,
+      phenotypeRules
+    );
 
     renderApp(
       species,
       traits,
       breedingRules,
       mutations,
+      loci,
+      speciesGenotypes,
+      phenotypeRules,
       resetAnimals,
       null,
       null,
@@ -483,6 +598,9 @@ function renderApp(
       traits,
       breedingRules,
       mutations,
+      loci,
+      speciesGenotypes,
+      phenotypeRules,
       animals,
       latestOffspring,
       latestCompatibility,
@@ -503,6 +621,9 @@ function renderApp(
       traits,
       breedingRules,
       mutations,
+      loci,
+      speciesGenotypes,
+      phenotypeRules,
       animals,
       latestOffspring,
       latestCompatibility,
@@ -528,6 +649,9 @@ function renderApp(
         traits,
         breedingRules,
         mutations,
+        loci,
+        speciesGenotypes,
+        phenotypeRules,
         animals,
         null,
         {
@@ -543,7 +667,14 @@ function renderApp(
       return;
     }
 
-    const litter = createLitter(parentA, parentB, compatibility, mutations, animals);
+    const litter = createLitter(
+      parentA,
+      parentB,
+      compatibility,
+      mutations,
+      animals,
+      phenotypeRules
+    );
 
     litter.forEach((pup) => animals.push(pup));
 
@@ -554,6 +685,9 @@ function renderApp(
       traits,
       breedingRules,
       mutations,
+      loci,
+      speciesGenotypes,
+      phenotypeRules,
       animals,
       litter[litter.length - 1] ?? null,
       {
@@ -579,21 +713,37 @@ async function bootstrap() {
   app.innerHTML = "<h1>Loading Canidae: Lineages...</h1>";
 
   try {
-    const [species, traits, breedingRules, mutations] = await Promise.all([
+    const [
+      species,
+      traits,
+      breedingRules,
+      mutations,
+      loci,
+      speciesGenotypes,
+      phenotypeRules,
+    ] = await Promise.all([
       loadJson("/data/canid_compendium_starter.json"),
       loadJson("/data/trait_library_starter.json"),
       loadJson("/data/breeding_rules_starter.json"),
       loadJson("/data/MUTATION_CATALOG_V1.json"),
+      loadJson("/data/genetics/loci.json"),
+      loadJson("/data/genetics/species_genotypes.json"),
+      loadJson("/data/genetics/phenotype_rules.json"),
     ]);
 
     const savedAnimals = loadSavedAnimals();
-    const animals = savedAnimals ?? createFounderAnimals(species);
+    const animals =
+      savedAnimals ??
+      createFounderAnimals(species, speciesGenotypes, phenotypeRules);
 
     renderApp(
       species,
       traits,
       breedingRules,
       mutations,
+      loci,
+      speciesGenotypes,
+      phenotypeRules,
       animals,
       null,
       null,

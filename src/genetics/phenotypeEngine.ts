@@ -1,5 +1,30 @@
 import type { Genotype, TraitValue } from "../types/animal";
 
+interface RuleCondition {
+  type: "always" | "hasAllele" | "homozygous" | "dominantEquals";
+  locus?: string;
+  allele?: string;
+}
+
+interface RuleAction {
+  type: "setTrait" | "setTraitIfGreater" | "setTraitIfLower" | "setTraitFromDominantMap";
+  trait: string;
+  value?: TraitValue;
+  locus?: string;
+  map?: Record<string, TraitValue>;
+}
+
+interface PhenotypeRule {
+  id: string;
+  description?: string;
+  conditions: RuleCondition[];
+  actions: RuleAction[];
+}
+
+interface PhenotypeRulesData {
+  rules?: PhenotypeRule[];
+}
+
 function hasAllele(genotype: Genotype, locus: string, allele: string): boolean {
   const pair = genotype.loci[locus];
 
@@ -30,95 +55,105 @@ function dominantAllele(genotype: Genotype, locus: string): string | null {
   return pair.maternal;
 }
 
+function conditionMatches(condition: RuleCondition, genotype: Genotype): boolean {
+  if (condition.type === "always") {
+    return true;
+  }
+
+  if (!condition.locus || !condition.allele) {
+    return false;
+  }
+
+  if (condition.type === "hasAllele") {
+    return hasAllele(genotype, condition.locus, condition.allele);
+  }
+
+  if (condition.type === "homozygous") {
+    return isHomozygous(genotype, condition.locus, condition.allele);
+  }
+
+  if (condition.type === "dominantEquals") {
+    return dominantAllele(genotype, condition.locus) === condition.allele;
+  }
+
+  return false;
+}
+
+function ruleMatches(rule: PhenotypeRule, genotype: Genotype): boolean {
+  return rule.conditions.every((condition) => conditionMatches(condition, genotype));
+}
+
+function applyAction(
+  action: RuleAction,
+  genotype: Genotype,
+  phenotype: Record<string, TraitValue>
+) {
+  if (action.type === "setTrait") {
+    if (action.value !== undefined) {
+      phenotype[action.trait] = action.value;
+    }
+
+    return;
+  }
+
+  if (action.type === "setTraitIfGreater") {
+    if (typeof action.value !== "number") {
+      return;
+    }
+
+    const currentValue = Number(phenotype[action.trait] ?? 0);
+    phenotype[action.trait] = Math.max(currentValue, action.value);
+    return;
+  }
+
+  if (action.type === "setTraitIfLower") {
+    if (typeof action.value !== "number") {
+      return;
+    }
+
+    const currentValue = Number(phenotype[action.trait] ?? 1);
+    phenotype[action.trait] = Math.min(currentValue, action.value);
+    return;
+  }
+
+  if (action.type === "setTraitFromDominantMap") {
+    if (!action.locus || !action.map) {
+      return;
+    }
+
+    const allele = dominantAllele(genotype, action.locus);
+
+    if (!allele) {
+      return;
+    }
+
+    const mappedValue = action.map[allele];
+
+    if (mappedValue !== undefined) {
+      phenotype[action.trait] = mappedValue;
+    }
+  }
+}
+
 export function evaluatePhenotypeFromGenotype(
   genotype: Genotype,
-  basePhenotype: Record<string, TraitValue>
+  basePhenotype: Record<string, TraitValue>,
+  phenotypeRulesData: PhenotypeRulesData
 ): Record<string, TraitValue> {
   const phenotype: Record<string, TraitValue> = {
     ...basePhenotype,
   };
 
-  if (isHomozygous(genotype, "coat_extension_locus", "e")) {
-    phenotype.trait_base_coat_color = "cream";
-  } else {
-    const coatAllele = dominantAllele(genotype, "coat_base_locus");
+  const rules = phenotypeRulesData.rules ?? [];
 
-    if (coatAllele === "white_carrier" && Math.random() < 0.35) {
-      phenotype.trait_base_coat_color = "white";
-    } else if (coatAllele === "black_carrier" && Math.random() < 0.35) {
-      phenotype.trait_base_coat_color = "black";
-    } else if (coatAllele) {
-      phenotype.trait_base_coat_color = coatAllele;
+  for (const rule of rules) {
+    if (!ruleMatches(rule, genotype)) {
+      continue;
     }
-  }
 
-  if (hasAllele(genotype, "coat_pattern_locus", "piebald")) {
-    phenotype.trait_coat_pattern = "piebald";
-  }
-
-  if (hasAllele(genotype, "coat_pattern_locus", "masked")) {
-    phenotype.trait_coat_pattern = "masked";
-  }
-
-  if (hasAllele(genotype, "ear_carriage_locus", "floppy")) {
-    phenotype.trait_ear_type = "semi_erect";
-  }
-
-  if (isHomozygous(genotype, "ear_carriage_locus", "floppy")) {
-    phenotype.trait_ear_type = "floppy";
-  }
-
-  if (hasAllele(genotype, "ear_carriage_locus", "erect_large")) {
-    phenotype.trait_ear_type = "erect_large";
-  }
-
-  if (hasAllele(genotype, "tail_carriage_locus", "bobtail")) {
-    phenotype.trait_tail_type = "bobtail";
-  }
-
-  if (hasAllele(genotype, "tail_carriage_locus", "bushy_short")) {
-    phenotype.trait_tail_type = "bushy_short";
-  }
-
-  const bodySize = dominantAllele(genotype, "body_size_locus");
-
-  if (bodySize === "tiny") phenotype.trait_body_size = 0.18;
-  if (bodySize === "small") phenotype.trait_body_size = 0.3;
-  if (bodySize === "medium_small") phenotype.trait_body_size = 0.45;
-  if (bodySize === "medium") phenotype.trait_body_size = 0.6;
-  if (bodySize === "large") phenotype.trait_body_size = 0.85;
-  if (bodySize === "giant") phenotype.trait_body_size = 0.95;
-
-  const temperament = dominantAllele(genotype, "temperament_locus");
-
-  if (temperament === "domestic_social") {
-    phenotype.trait_temperament = Math.max(
-      Number(phenotype.trait_temperament ?? 0.5),
-      0.8
-    );
-    phenotype.trait_trainability = Math.max(
-      Number(phenotype.trait_trainability ?? 0.4),
-      0.85
-    );
-  }
-
-  if (temperament === "ancient_predator") {
-    phenotype.trait_prey_drive = Math.max(
-      Number(phenotype.trait_prey_drive ?? 0.7),
-      0.95
-    );
-    phenotype.trait_trainability = Math.min(
-      Number(phenotype.trait_trainability ?? 0.4),
-      0.2
-    );
-  }
-
-  if (hasAllele(genotype, "domestication_locus", "domesticated")) {
-    phenotype.trait_domestication_score = 0.85;
-  } else {
-    phenotype.trait_domestication_score = Number(
-      phenotype.trait_domestication_score ?? 0.05
-    );
+    for (const action of rule.actions) {
+      applyAction(action, genotype, phenotype);
+    }
   }
 
   return phenotype;

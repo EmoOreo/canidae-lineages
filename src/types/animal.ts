@@ -13,6 +13,7 @@ export interface Genotype {
 export interface AncestrySnapshot {
   parentIds: string[];
   founderIds: string[];
+  ancestorIds: string[];
   lineage: Record<string, number>;
 }
 

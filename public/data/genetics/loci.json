@@ -1,0 +1,59 @@
+{
+  "version": "0.1.0",
+  "loci": {
+    "coat_base_locus": {
+      "label": "Base Coat Locus",
+      "category": "coat",
+      "alleles": ["agouti", "sandy", "red_orange", "cream", "gray", "white_carrier", "black_carrier"],
+      "notes": "Controls the default base coat color before epistatic masking."
+    },
+    "coat_extension_locus": {
+      "label": "Extension Locus",
+      "category": "coat",
+      "alleles": ["E", "e"],
+      "notes": "Homozygous e/e masks dark pigment expression into cream/yellow-type coats."
+    },
+    "coat_dilution_locus": {
+      "label": "Dilution Locus",
+      "category": "coat",
+      "alleles": ["D", "d"],
+      "notes": "Reserved for future dilute color expression."
+    },
+    "coat_pattern_locus": {
+      "label": "Coat Pattern Locus",
+      "category": "coat",
+      "alleles": ["solid", "masked", "piebald"],
+      "notes": "Controls major visible pattern classes."
+    },
+    "ear_carriage_locus": {
+      "label": "Ear Carriage Locus",
+      "category": "morphology",
+      "alleles": ["erect", "floppy", "erect_large"],
+      "notes": "Controls ear posture and size traits."
+    },
+    "tail_carriage_locus": {
+      "label": "Tail Carriage Locus",
+      "category": "morphology",
+      "alleles": ["normal", "bobtail", "bushy_short"],
+      "notes": "Controls tail carriage and tail length variants."
+    },
+    "body_size_locus": {
+      "label": "Body Size Locus",
+      "category": "morphology",
+      "alleles": ["tiny", "small", "medium_small", "medium", "large", "giant", "variable_large", "variable_small"],
+      "notes": "Major body size class. Polygenic size will eventually expand beyond this simple locus."
+    },
+    "temperament_locus": {
+      "label": "Temperament Locus",
+      "category": "behavior",
+      "alleles": ["wild_balanced", "domestic_social", "pack_wild", "adaptable_wild", "solitary_wild", "desert_wild", "ancient_predator"],
+      "notes": "High-level behavior inheritance placeholder before full behavior genetics."
+    },
+    "domestication_locus": {
+      "label": "Domestication Locus",
+      "category": "behavior",
+      "alleles": ["wildtype", "domesticated"],
+      "notes": "Controls broad domestication expression and future neural-crest-linked traits."
+    }
+  }
+}

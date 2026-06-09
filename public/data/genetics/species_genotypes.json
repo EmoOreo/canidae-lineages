@@ -1,0 +1,82 @@
+{
+  "version": "0.1.0",
+  "defaultGenotype": {
+    "coat_base_locus": ["agouti", "agouti"],
+    "coat_extension_locus": ["E", "E"],
+    "coat_dilution_locus": ["D", "D"],
+    "coat_pattern_locus": ["solid", "solid"],
+    "ear_carriage_locus": ["erect", "erect"],
+    "tail_carriage_locus": ["normal", "normal"],
+    "body_size_locus": ["medium", "medium"],
+    "temperament_locus": ["wild_balanced", "wild_balanced"],
+    "domestication_locus": ["wildtype", "wildtype"]
+  },
+  "founderGenotypes": {
+    "canis_lupus_familiaris": {
+      "coat_base_locus": ["agouti", "white_carrier"],
+      "coat_extension_locus": ["E", "e"],
+      "coat_dilution_locus": ["D", "D"],
+      "coat_pattern_locus": ["solid", "solid"],
+      "ear_carriage_locus": ["erect", "floppy"],
+      "tail_carriage_locus": ["normal", "bobtail"],
+      "body_size_locus": ["variable_large", "variable_small"],
+      "temperament_locus": ["domestic_social", "domestic_social"],
+      "domestication_locus": ["domesticated", "domesticated"]
+    },
+    "canis_lupus": {
+      "coat_base_locus": ["agouti", "white_carrier"],
+      "coat_extension_locus": ["E", "E"],
+      "coat_dilution_locus": ["D", "D"],
+      "coat_pattern_locus": ["solid", "solid"],
+      "ear_carriage_locus": ["erect", "erect"],
+      "tail_carriage_locus": ["normal", "bushy_short"],
+      "body_size_locus": ["large", "large"],
+      "temperament_locus": ["pack_wild", "pack_wild"],
+      "domestication_locus": ["wildtype", "wildtype"]
+    },
+    "canis_latrans": {
+      "coat_base_locus": ["sandy", "agouti"],
+      "coat_extension_locus": ["E", "E"],
+      "coat_dilution_locus": ["D", "D"],
+      "coat_pattern_locus": ["solid", "masked"],
+      "ear_carriage_locus": ["erect", "erect"],
+      "tail_carriage_locus": ["normal", "normal"],
+      "body_size_locus": ["medium_small", "medium_small"],
+      "temperament_locus": ["adaptable_wild", "adaptable_wild"],
+      "domestication_locus": ["wildtype", "wildtype"]
+    },
+    "vulpes_vulpes": {
+      "coat_base_locus": ["red_orange", "black_carrier"],
+      "coat_extension_locus": ["E", "E"],
+      "coat_dilution_locus": ["D", "D"],
+      "coat_pattern_locus": ["solid", "piebald"],
+      "ear_carriage_locus": ["erect", "erect"],
+      "tail_carriage_locus": ["normal", "normal"],
+      "body_size_locus": ["small", "small"],
+      "temperament_locus": ["solitary_wild", "solitary_wild"],
+      "domestication_locus": ["wildtype", "wildtype"]
+    },
+    "vulpes_zerda": {
+      "coat_base_locus": ["cream", "cream"],
+      "coat_extension_locus": ["E", "E"],
+      "coat_dilution_locus": ["D", "D"],
+      "coat_pattern_locus": ["solid", "solid"],
+      "ear_carriage_locus": ["erect_large", "erect_large"],
+      "tail_carriage_locus": ["normal", "normal"],
+      "body_size_locus": ["tiny", "tiny"],
+      "temperament_locus": ["desert_wild", "desert_wild"],
+      "domestication_locus": ["wildtype", "wildtype"]
+    },
+    "aenocyon_dirus": {
+      "coat_base_locus": ["gray", "red_orange"],
+      "coat_extension_locus": ["E", "E"],
+      "coat_dilution_locus": ["D", "D"],
+      "coat_pattern_locus": ["solid", "solid"],
+      "ear_carriage_locus": ["erect", "erect"],
+      "tail_carriage_locus": ["normal", "normal"],
+      "body_size_locus": ["giant", "giant"],
+      "temperament_locus": ["ancient_predator", "ancient_predator"],
+      "domestication_locus": ["wildtype", "wildtype"]
+    }
+  }
+}

@@ -10,6 +10,7 @@ import {
   inheritGenotype,
 } from "../genetics/genotypeEngine";
 import { evaluatePhenotypeFromGenotype } from "../genetics/phenotypeEngine";
+import { normalizeCarriers } from "../genetics/normalizeCarriers";
 
 function round(value: number): number {
   return Math.round(value * 100) / 100;
@@ -28,6 +29,14 @@ function createAncestrySnapshot(
         ...(parentB.ancestry?.founderIds ?? []),
       ])
     ),
+    ancestorIds: Array.from(
+      new Set([
+        parentA.id,
+        parentB.id,
+        ...(parentA.ancestry?.ancestorIds ?? []),
+        ...(parentB.ancestry?.ancestorIds ?? []),
+      ])
+    ),
     lineage,
   };
 }
@@ -37,14 +46,16 @@ export function createOffspring(
   parentB: Animal,
   compatibility: CompatibilityResult,
   mutationData: any,
-  inbreedingResult: InbreedingResult
+  inbreedingResult: InbreedingResult,
+  phenotypeRulesData: any
 ): Animal {
   const lineage = resolveLineage(parentA, parentB);
   const traitResult = resolveTraits(parentA, parentB);
   const genotype = inheritGenotype(parentA, parentB);
   const phenotype = evaluatePhenotypeFromGenotype(
     genotype,
-    traitResult.phenotype
+    traitResult.phenotype,
+    phenotypeRulesData
   );
 
   const generation = Math.max(parentA.generation, parentB.generation) + 1;
@@ -102,12 +113,10 @@ export function createOffspring(
 
     genome: {
       D: Object.keys(phenotype),
-      R: Array.from(
-        new Set([
-          ...traitResult.recessiveCarriers,
-          ...getRecessiveCarriersFromGenotype(genotype),
-        ])
-      ),
+      R: normalizeCarriers([
+        ...traitResult.recessiveCarriers,
+        ...getRecessiveCarriersFromGenotype(genotype),
+      ]),
       M: mutationIds,
       L: lineage,
     },

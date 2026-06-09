@@ -1,4 +1,12 @@
 import type { Animal, Genotype, AllelePair } from "../types/animal";
+import { normalizeCarriers } from "./normalizeCarriers";
+
+type RawAllelePair = [string, string];
+
+interface SpeciesGenotypesData {
+  defaultGenotype?: Record<string, RawAllelePair>;
+  founderGenotypes?: Record<string, Record<string, RawAllelePair>>;
+}
 
 function chooseAllele(pair: AllelePair): string {
   return Math.random() < 0.5 ? pair.maternal : pair.paternal;
@@ -11,65 +19,36 @@ function makePair(maternal: string, paternal: string): AllelePair {
   };
 }
 
-export function createFounderGenotype(species: any): Genotype {
-  const speciesId = species.id;
-
-  const loci: Record<string, AllelePair> = {
-    coat_base_locus: makePair("agouti", "agouti"),
-    coat_extension_locus: makePair("E", "E"),
-    coat_dilution_locus: makePair("D", "D"),
-    coat_pattern_locus: makePair("solid", "solid"),
-    ear_carriage_locus: makePair("erect", "erect"),
-    tail_carriage_locus: makePair("normal", "normal"),
-    body_size_locus: makePair("medium", "medium"),
-    temperament_locus: makePair("wild_balanced", "wild_balanced"),
-    domestication_locus: makePair("wildtype", "wildtype"),
-  };
-
-  if (speciesId === "canis_lupus_familiaris") {
-    loci.coat_base_locus = makePair("agouti", "white_carrier");
-    loci.coat_extension_locus = makePair("E", "e");
-    loci.ear_carriage_locus = makePair("erect", "floppy");
-    loci.tail_carriage_locus = makePair("normal", "bobtail");
-    loci.body_size_locus = makePair("variable_large", "variable_small");
-    loci.temperament_locus = makePair("domestic_social", "domestic_social");
-    loci.domestication_locus = makePair("domesticated", "domesticated");
+function normalizeRawPair(rawPair: RawAllelePair | undefined): AllelePair | null {
+  if (!rawPair || rawPair.length < 2) {
+    return null;
   }
 
-  if (speciesId === "canis_lupus") {
-    loci.coat_base_locus = makePair("agouti", "white_carrier");
-    loci.coat_extension_locus = makePair("E", "E");
-    loci.tail_carriage_locus = makePair("normal", "bushy_short");
-    loci.body_size_locus = makePair("large", "large");
-    loci.temperament_locus = makePair("pack_wild", "pack_wild");
-  }
+  return makePair(rawPair[0], rawPair[1]);
+}
 
-  if (speciesId === "canis_latrans") {
-    loci.coat_base_locus = makePair("sandy", "agouti");
-    loci.coat_pattern_locus = makePair("solid", "masked");
-    loci.body_size_locus = makePair("medium_small", "medium_small");
-    loci.temperament_locus = makePair("adaptable_wild", "adaptable_wild");
-  }
+export function createFounderGenotype(
+  species: any,
+  speciesGenotypesData: SpeciesGenotypesData
+): Genotype {
+  const defaultGenotype = speciesGenotypesData.defaultGenotype ?? {};
+  const speciesGenotype =
+    speciesGenotypesData.founderGenotypes?.[species.id] ?? {};
 
-  if (speciesId === "vulpes_vulpes") {
-    loci.coat_base_locus = makePair("red_orange", "black_carrier");
-    loci.coat_pattern_locus = makePair("solid", "piebald");
-    loci.ear_carriage_locus = makePair("erect", "erect");
-    loci.body_size_locus = makePair("small", "small");
-    loci.temperament_locus = makePair("solitary_wild", "solitary_wild");
-  }
+  const locusNames = new Set([
+    ...Object.keys(defaultGenotype),
+    ...Object.keys(speciesGenotype),
+  ]);
 
-  if (speciesId === "vulpes_zerda") {
-    loci.coat_base_locus = makePair("cream", "cream");
-    loci.ear_carriage_locus = makePair("erect_large", "erect_large");
-    loci.body_size_locus = makePair("tiny", "tiny");
-    loci.temperament_locus = makePair("desert_wild", "desert_wild");
-  }
+  const loci: Record<string, AllelePair> = {};
 
-  if (speciesId === "aenocyon_dirus") {
-    loci.coat_base_locus = makePair("gray", "red_orange");
-    loci.body_size_locus = makePair("giant", "giant");
-    loci.temperament_locus = makePair("ancient_predator", "ancient_predator");
+  for (const locusName of locusNames) {
+    const rawPair = speciesGenotype[locusName] ?? defaultGenotype[locusName];
+    const pair = normalizeRawPair(rawPair);
+
+    if (pair) {
+      loci[locusName] = pair;
+    }
   }
 
   return {
@@ -138,5 +117,5 @@ export function getRecessiveCarriersFromGenotype(genotype: Genotype): string[] {
     }
   }
 
-  return carriers;
+  return normalizeCarriers(carriers);
 }

@@ -1,6 +1,7 @@
 import type { Animal, TraitValue } from "../types/animal";
 import { createFounderGenotype } from "./genotypeEngine";
 import { evaluatePhenotypeFromGenotype } from "./phenotypeEngine";
+import { normalizeCarriers } from "./normalizeCarriers";
 
 function normalizeBodySize(species: any): number {
   const maxMass = species.bodyMassKg?.max ?? 50;
@@ -153,10 +154,27 @@ function createFounderRecessiveCarriers(species: any): string[] {
     carriers.push("trait_base_coat_color:gray");
   }
 
-  return carriers;
+  return normalizeCarriers(carriers);
 }
 
-export function createFounderAnimals(speciesData: any): Animal[] {
+function getStableFounderId(speciesId: string): string {
+  const stableIds: Record<string, string> = {
+    canis_lupus_familiaris: "founder_domestic_dog_alpha",
+    canis_lupus: "founder_gray_wolf_alpha",
+    canis_latrans: "founder_coyote_alpha",
+    vulpes_vulpes: "founder_red_fox_alpha",
+    vulpes_zerda: "founder_fennec_fox_alpha",
+    aenocyon_dirus: "founder_dire_wolf_alpha",
+  };
+
+  return stableIds[speciesId] ?? `founder_${speciesId}`;
+}
+
+export function createFounderAnimals(
+  speciesData: any,
+  speciesGenotypesData: any,
+  phenotypeRulesData: any
+): Animal[] {
   const starterSpecies = [
     "canis_lupus_familiaris",
     "canis_lupus",
@@ -169,13 +187,17 @@ export function createFounderAnimals(speciesData: any): Animal[] {
   return starterSpecies
     .map((id) => speciesData.canids.find((canid: any) => canid.id === id))
     .filter(Boolean)
-    .map((species: any, index: number): Animal => {
-      const genotype = createFounderGenotype(species);
+    .map((species: any): Animal => {
+      const genotype = createFounderGenotype(species, speciesGenotypesData);
       const basePhenotype = createFounderBasePhenotype(species);
-      const phenotype = evaluatePhenotypeFromGenotype(genotype, basePhenotype);
+      const phenotype = evaluatePhenotypeFromGenotype(
+        genotype,
+        basePhenotype,
+        phenotypeRulesData
+      );
       const recessiveCarriers = createFounderRecessiveCarriers(species);
 
-      const id = `founder_${index}`;
+      const id = getStableFounderId(species.id);
 
       return {
         id,
@@ -197,6 +219,7 @@ export function createFounderAnimals(speciesData: any): Animal[] {
         ancestry: {
           parentIds: [],
           founderIds: [id],
+          ancestorIds: [],
           lineage: {
             [species.id]: 100,
           },

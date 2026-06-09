@@ -1,0 +1,274 @@
+{
+  "version": "0.1.0",
+  "rules": [
+    {
+      "id": "coat_base_from_dominant_allele",
+      "description": "Sets base coat from the dominant visible coat allele.",
+      "conditions": [{ "type": "always" }],
+      "actions": [
+        {
+          "type": "setTraitFromDominantMap",
+          "locus": "coat_base_locus",
+          "trait": "trait_base_coat_color",
+          "map": {
+            "agouti": "agouti",
+            "sandy": "sandy",
+            "red_orange": "red_orange",
+            "cream": "cream",
+            "gray": "gray",
+            "white_carrier": "agouti",
+            "black_carrier": "black"
+          }
+        }
+      ]
+    },
+    {
+      "id": "extension_recessive_cream_mask",
+      "description": "e/e masks darker pigment and expresses cream coat.",
+      "conditions": [
+        {
+          "type": "homozygous",
+          "locus": "coat_extension_locus",
+          "allele": "e"
+        }
+      ],
+      "actions": [
+        {
+          "type": "setTrait",
+          "trait": "trait_base_coat_color",
+          "value": "cream"
+        }
+      ]
+    },
+    {
+      "id": "piebald_pattern_expression",
+      "description": "Piebald allele expresses visible piebald pattern.",
+      "conditions": [
+        {
+          "type": "hasAllele",
+          "locus": "coat_pattern_locus",
+          "allele": "piebald"
+        }
+      ],
+      "actions": [
+        {
+          "type": "setTrait",
+          "trait": "trait_coat_pattern",
+          "value": "piebald"
+        }
+      ]
+    },
+    {
+      "id": "masked_pattern_expression",
+      "description": "Masked allele expresses visible masked pattern.",
+      "conditions": [
+        {
+          "type": "hasAllele",
+          "locus": "coat_pattern_locus",
+          "allele": "masked"
+        }
+      ],
+      "actions": [
+        {
+          "type": "setTrait",
+          "trait": "trait_coat_pattern",
+          "value": "masked"
+        }
+      ]
+    },
+    {
+      "id": "floppy_ear_carrier_expression",
+      "description": "One floppy allele produces semi-erect ears.",
+      "conditions": [
+        {
+          "type": "hasAllele",
+          "locus": "ear_carriage_locus",
+          "allele": "floppy"
+        }
+      ],
+      "actions": [
+        {
+          "type": "setTrait",
+          "trait": "trait_ear_type",
+          "value": "semi_erect"
+        }
+      ]
+    },
+    {
+      "id": "floppy_ear_homozygous_expression",
+      "description": "Two floppy alleles produce fully floppy ears.",
+      "conditions": [
+        {
+          "type": "homozygous",
+          "locus": "ear_carriage_locus",
+          "allele": "floppy"
+        }
+      ],
+      "actions": [
+        {
+          "type": "setTrait",
+          "trait": "trait_ear_type",
+          "value": "floppy"
+        }
+      ]
+    },
+    {
+      "id": "large_ear_expression",
+      "description": "Large erect ear allele expresses large erect ears.",
+      "conditions": [
+        {
+          "type": "hasAllele",
+          "locus": "ear_carriage_locus",
+          "allele": "erect_large"
+        }
+      ],
+      "actions": [
+        {
+          "type": "setTrait",
+          "trait": "trait_ear_type",
+          "value": "erect_large"
+        }
+      ]
+    },
+    {
+      "id": "bobtail_expression",
+      "description": "Bobtail allele expresses bobtail phenotype.",
+      "conditions": [
+        {
+          "type": "hasAllele",
+          "locus": "tail_carriage_locus",
+          "allele": "bobtail"
+        }
+      ],
+      "actions": [
+        {
+          "type": "setTrait",
+          "trait": "trait_tail_type",
+          "value": "bobtail"
+        }
+      ]
+    },
+    {
+      "id": "bushy_short_tail_expression",
+      "description": "Bushy short tail allele expresses shortened bushy tail.",
+      "conditions": [
+        {
+          "type": "hasAllele",
+          "locus": "tail_carriage_locus",
+          "allele": "bushy_short"
+        }
+      ],
+      "actions": [
+        {
+          "type": "setTrait",
+          "trait": "trait_tail_type",
+          "value": "bushy_short"
+        }
+      ]
+    },
+    {
+      "id": "body_size_from_dominant_allele",
+      "description": "Maps major body size allele to numeric body size trait.",
+      "conditions": [{ "type": "always" }],
+      "actions": [
+        {
+          "type": "setTraitFromDominantMap",
+          "locus": "body_size_locus",
+          "trait": "trait_body_size",
+          "map": {
+            "tiny": 0.18,
+            "small": 0.3,
+            "medium_small": 0.45,
+            "medium": 0.6,
+            "large": 0.85,
+            "giant": 0.95,
+            "variable_large": 0.9,
+            "variable_small": 0.35
+          }
+        }
+      ]
+    },
+    {
+      "id": "domestic_social_temperament",
+      "description": "Domestic social temperament improves temperament and trainability.",
+      "conditions": [
+        {
+          "type": "hasAllele",
+          "locus": "temperament_locus",
+          "allele": "domestic_social"
+        }
+      ],
+      "actions": [
+        {
+          "type": "setTraitIfGreater",
+          "trait": "trait_temperament",
+          "value": 0.8
+        },
+        {
+          "type": "setTraitIfGreater",
+          "trait": "trait_trainability",
+          "value": 0.85
+        }
+      ]
+    },
+    {
+      "id": "ancient_predator_temperament",
+      "description": "Ancient predator temperament increases prey drive and lowers trainability.",
+      "conditions": [
+        {
+          "type": "hasAllele",
+          "locus": "temperament_locus",
+          "allele": "ancient_predator"
+        }
+      ],
+      "actions": [
+        {
+          "type": "setTraitIfGreater",
+          "trait": "trait_prey_drive",
+          "value": 0.95
+        },
+        {
+          "type": "setTraitIfLower",
+          "trait": "trait_trainability",
+          "value": 0.2
+        }
+      ]
+    },
+    {
+      "id": "domestication_score_expression",
+      "description": "Domesticated allele creates high domestication score.",
+      "conditions": [
+        {
+          "type": "hasAllele",
+          "locus": "domestication_locus",
+          "allele": "domesticated"
+        }
+      ],
+      "actions": [
+        {
+          "type": "setTrait",
+          "trait": "trait_domestication_score",
+          "value": 0.85
+        }
+      ]
+    },
+    {
+      "id": "wildtype_domestication_default",
+      "description": "Wildtype animals retain low domestication score unless overridden.",
+      "conditions": [
+        {
+          "type": "homozygous",
+          "locus": "domestication_locus",
+          "allele": "wildtype"
+        }
+      ],
+      "actions": [
+        {
+          "type": "setTraitIfLower",
+          "trait": "trait_domestication_score",
+          "value": 0.05
+        }
+      ]
+    }
+  ]
+}
