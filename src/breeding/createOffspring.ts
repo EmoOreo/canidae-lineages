@@ -1,4 +1,4 @@
-import type { Animal } from "../types/animal";
+import type { Animal, SexDevelopment } from "../types/animal";
 import type { CompatibilityResult } from "./resolveCompatibility";
 import { resolveLineage } from "../lineage/resolveLineage";
 import { resolveMutation } from "../genetics/resolveMutation";
@@ -38,6 +38,26 @@ function createAncestrySnapshot(
       ])
     ),
     lineage,
+  };
+}
+
+function createOffspringSexDevelopment(): SexDevelopment {
+  if (Math.random() < 0.5) {
+    return {
+      chromosomal: "XX",
+      gonadal: "ovaries",
+      phenotypic: "female",
+      reproductiveRole: "dam",
+      developmentalAnomalies: [],
+    };
+  }
+
+  return {
+    chromosomal: "XY",
+    gonadal: "testes",
+    phenotypic: "male",
+    reproductiveRole: "sire",
+    developmentalAnomalies: [],
   };
 }
 
@@ -103,6 +123,14 @@ export function createOffspring(
     fatherId: parentB.id,
     motherName: parentA.name,
     fatherName: parentB.name,
+
+    sex: createOffspringSexDevelopment(),
+
+    reproduction: {
+      pregnant: false,
+      gestationProgress: 0,
+      litterCount: 0,
+    },
 
     inbreedingCoefficient: inbreedingResult.coefficient,
     inbreedingTier: inbreedingResult.tier,

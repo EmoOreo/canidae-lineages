@@ -17,6 +17,30 @@ export interface AncestrySnapshot {
   lineage: Record<string, number>;
 }
 
+export type ChromosomalSex = "XX" | "XY" | "XXY" | "XO" | "mosaic" | "unknown";
+export type GonadalSex =
+  | "ovaries"
+  | "testes"
+  | "ovotestes"
+  | "streak_gonads"
+  | "undifferentiated";
+export type PhenotypicSex = "female" | "male" | "intersex" | "ambiguous";
+export type ReproductiveRole = "dam" | "sire" | "sterile" | "limited";
+
+export interface SexDevelopment {
+  chromosomal: ChromosomalSex;
+  gonadal: GonadalSex;
+  phenotypic: PhenotypicSex;
+  reproductiveRole: ReproductiveRole;
+  developmentalAnomalies: string[];
+}
+
+export interface ReproductionState {
+  pregnant: boolean;
+  gestationProgress: number;
+  litterCount: number;
+}
+
 export interface Animal {
   id: string;
   name: string;
@@ -27,6 +51,9 @@ export interface Animal {
   fatherId: string | null;
   motherName: string | null;
   fatherName: string | null;
+
+  sex: SexDevelopment;
+  reproduction: ReproductionState;
 
   inbreedingCoefficient: number;
   inbreedingTier: "none" | "low" | "moderate" | "high" | "severe";

@@ -1,4 +1,4 @@
-import type { Animal, TraitValue } from "../types/animal";
+import type { Animal, SexDevelopment, TraitValue } from "../types/animal";
 import { createFounderGenotype } from "./genotypeEngine";
 import { evaluatePhenotypeFromGenotype } from "./phenotypeEngine";
 import { normalizeCarriers } from "./normalizeCarriers";
@@ -170,6 +170,39 @@ function getStableFounderId(speciesId: string): string {
   return stableIds[speciesId] ?? `founder_${speciesId}`;
 }
 
+function createSexDevelopment(role: "dam" | "sire"): SexDevelopment {
+  if (role === "dam") {
+    return {
+      chromosomal: "XX",
+      gonadal: "ovaries",
+      phenotypic: "female",
+      reproductiveRole: "dam",
+      developmentalAnomalies: [],
+    };
+  }
+
+  return {
+    chromosomal: "XY",
+    gonadal: "testes",
+    phenotypic: "male",
+    reproductiveRole: "sire",
+    developmentalAnomalies: [],
+  };
+}
+
+function getFounderReproductiveRole(speciesId: string): "dam" | "sire" {
+  const roleMap: Record<string, "dam" | "sire"> = {
+    canis_lupus_familiaris: "dam",
+    canis_lupus: "sire",
+    canis_latrans: "dam",
+    vulpes_vulpes: "sire",
+    vulpes_zerda: "dam",
+    aenocyon_dirus: "sire",
+  };
+
+  return roleMap[speciesId] ?? (Math.random() < 0.5 ? "dam" : "sire");
+}
+
 export function createFounderAnimals(
   speciesData: any,
   speciesGenotypesData: any,
@@ -198,6 +231,7 @@ export function createFounderAnimals(
       const recessiveCarriers = createFounderRecessiveCarriers(species);
 
       const id = getStableFounderId(species.id);
+      const reproductiveRole = getFounderReproductiveRole(species.id);
 
       return {
         id,
@@ -209,6 +243,14 @@ export function createFounderAnimals(
         fatherId: null,
         motherName: null,
         fatherName: null,
+
+        sex: createSexDevelopment(reproductiveRole),
+
+        reproduction: {
+          pregnant: false,
+          gestationProgress: 0,
+          litterCount: 0,
+        },
 
         inbreedingCoefficient: 0,
         inbreedingTier: "none",

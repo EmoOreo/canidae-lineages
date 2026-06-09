@@ -5,7 +5,7 @@ import { createLitter } from "./breeding/createLitter";
 import { calculateInbreeding } from "./genetics/calculateInbreeding";
 import { normalizeCarriers } from "./genetics/normalizeCarriers";
 import { calculatePopulationStats } from "./stats/calculatePopulationStats";
-import type { Animal, Genotype } from "./types/animal";
+import type { Animal, Genotype, SexDevelopment } from "./types/animal";
 
 const SAVE_KEY = "canidae-lineages-save-v1";
 
@@ -47,6 +47,28 @@ function createFallbackGenotype(animal: Animal): Genotype {
   };
 }
 
+function createFallbackSex(indexSeed: string): SexDevelopment {
+  const isFemale = indexSeed.length % 2 === 0;
+
+  if (isFemale) {
+    return {
+      chromosomal: "XX",
+      gonadal: "ovaries",
+      phenotypic: "female",
+      reproductiveRole: "dam",
+      developmentalAnomalies: [],
+    };
+  }
+
+  return {
+    chromosomal: "XY",
+    gonadal: "testes",
+    phenotypic: "male",
+    reproductiveRole: "sire",
+    developmentalAnomalies: [],
+  };
+}
+
 function migrateFounderId(id: string): string {
   const idMap: Record<string, string> = {
     founder_0: "founder_domestic_dog_alpha",
@@ -79,6 +101,12 @@ function migrateAnimal(animal: Animal): Animal {
     fatherId: migratedFatherId,
     motherName: animal.motherName ?? null,
     fatherName: animal.fatherName ?? null,
+    sex: animal.sex ?? createFallbackSex(migratedId),
+    reproduction: animal.reproduction ?? {
+      pregnant: false,
+      gestationProgress: 0,
+      litterCount: 0,
+    },
     inbreedingCoefficient: animal.inbreedingCoefficient ?? 0,
     inbreedingTier: animal.inbreedingTier ?? "none",
     genotype: animal.genotype ?? createFallbackGenotype(animal),
@@ -129,6 +157,67 @@ function clearSave() {
   localStorage.removeItem(SAVE_KEY);
 }
 
+function getSexSymbol(animal: Animal): string {
+  if (animal.sex?.reproductiveRole === "dam") return "♀";
+  if (animal.sex?.reproductiveRole === "sire") return "♂";
+  if (animal.sex?.reproductiveRole === "limited") return "⚥";
+  return "∅";
+}
+
+function canServeAsDam(animal: Animal): boolean {
+  return animal.sex?.reproductiveRole === "dam" || animal.sex?.reproductiveRole === "limited";
+}
+
+function canServeAsSire(animal: Animal): boolean {
+  return animal.sex?.reproductiveRole === "sire" || animal.sex?.reproductiveRole === "limited";
+}
+
+function resolveBreedingRoles(
+  selectedA: Animal,
+  selectedB: Animal,
+  mode: BreedMode
+): {
+  dam: Animal;
+  sire: Animal;
+  blocked: boolean;
+  reason: string | null;
+} {
+  if (canServeAsDam(selectedA) && canServeAsSire(selectedB)) {
+    return {
+      dam: selectedA,
+      sire: selectedB,
+      blocked: false,
+      reason: null,
+    };
+  }
+
+  if (canServeAsDam(selectedB) && canServeAsSire(selectedA)) {
+    return {
+      dam: selectedB,
+      sire: selectedA,
+      blocked: false,
+      reason: null,
+    };
+  }
+
+  if (mode === "sandbox") {
+    return {
+      dam: selectedA,
+      sire: selectedB,
+      blocked: false,
+      reason: null,
+    };
+  }
+
+  return {
+    dam: selectedA,
+    sire: selectedB,
+    blocked: true,
+    reason:
+      "Realistic Mode requires one viable dam-role animal and one viable sire-role animal.",
+  };
+}
+
 function renderPopulationStats(animals: Animal[]): string {
   const stats = calculatePopulationStats(animals);
 
@@ -167,6 +256,27 @@ function renderGenotype(genotype: Genotype): string {
             `<li><strong>${locus}:</strong> ${pair.maternal} / ${pair.paternal}</li>`
         )
         .join("")}
+    </ul>
+  `;
+}
+
+function renderSexDevelopment(animal: Animal): string {
+  return `
+    <ul>
+      <li><strong>Chromosomal:</strong> ${animal.sex?.chromosomal ?? "unknown"}</li>
+      <li><strong>Gonadal:</strong> ${animal.sex?.gonadal ?? "unknown"}</li>
+      <li><strong>Phenotypic:</strong> ${animal.sex?.phenotypic ?? "unknown"}</li>
+      <li><strong>Reproductive Role:</strong> ${animal.sex?.reproductiveRole ?? "unknown"}</li>
+      <li><strong>Developmental Anomalies:</strong> ${
+        animal.sex?.developmentalAnomalies?.length
+          ? animal.sex.developmentalAnomalies.join(", ")
+          : "None"
+      }</li>
+      <li><strong>Pregnant:</strong> ${animal.reproduction?.pregnant ? "Yes" : "No"}</li>
+      <li><strong>Gestation Progress:</strong> ${
+        animal.reproduction?.gestationProgress ?? 0
+      }</li>
+      <li><strong>Litter Count:</strong> ${animal.reproduction?.litterCount ?? 0}</li>
     </ul>
   `;
 }
@@ -249,10 +359,16 @@ function renderPedigree(animal: Animal, animals: Animal[], depth = 0, maxDepth =
 function renderAnimal(animal: Animal, animals: Animal[]): string {
   return `
     <article>
-      <h4>${animal.name}</h4>
+      <h4>${animal.name} ${getSexSymbol(animal)}</h4>
       <p><strong>ID:</strong> ${animal.id}</p>
       <p><strong>Species ID:</strong> ${animal.speciesId}</p>
       <p><strong>Generation:</strong> ${animal.generation}</p>
+      <p><strong>Sex:</strong> ${animal.sex?.phenotypic ?? "unknown"} / ${
+        animal.sex?.chromosomal ?? "unknown"
+      }</p>
+      <p><strong>Reproductive Role:</strong> ${
+        animal.sex?.reproductiveRole ?? "unknown"
+      }</p>
       <p><strong>Mother:</strong> ${animal.motherName ?? "Founder"}</p>
       <p><strong>Father:</strong> ${animal.fatherName ?? "Founder"}</p>
       <p><strong>Inbreeding Coefficient:</strong> ${animal.inbreedingCoefficient ?? 0}</p>
@@ -277,6 +393,11 @@ function renderAnimal(animal: Animal, animals: Animal[]): string {
       }</p>
 
       <details>
+        <summary>Sex Development</summary>
+        ${renderSexDevelopment(animal)}
+      </details>
+
+      <details>
         <summary>Genotype</summary>
         ${renderGenotype(animal.genotype)}
       </details>
@@ -298,7 +419,10 @@ function renderAnimal(animal: Animal, animals: Animal[]): string {
 
 function renderAnimalOptions(animals: Animal[]): string {
   return animals
-    .map((animal) => `<option value="${animal.id}">${animal.name} — ${animal.speciesId}</option>`)
+    .map(
+      (animal) =>
+        `<option value="${animal.id}">${animal.name} ${getSexSymbol(animal)} — ${animal.speciesId}</option>`
+    )
     .join("");
 }
 
@@ -323,7 +447,8 @@ function applyKennelFilters(animals: Animal[], filters: KennelFilters): Animal[]
         animal.name.toLowerCase().includes(search) ||
         animal.speciesId.toLowerCase().includes(search) ||
         animal.id.toLowerCase().includes(search) ||
-        (animal.inbreedingTier ?? "none").toLowerCase().includes(search)
+        (animal.inbreedingTier ?? "none").toLowerCase().includes(search) ||
+        (animal.sex?.reproductiveRole ?? "").toLowerCase().includes(search)
     );
   }
 
@@ -398,7 +523,7 @@ function renderApp(
 
   app.innerHTML = `
     <h1>Canidae: Lineages</h1>
-    <h2>Phase 0E/0F/0G - Carrier Normalization, Population Stats, Stable Founder IDs</h2>
+    <h2>Phase 1A - Sex Development System</h2>
 
     <section>
       <p><strong>Species Loaded:</strong> ${species.canids?.length ?? "Unknown"}</p>
@@ -431,12 +556,12 @@ function renderApp(
     <section>
       <h3>Breeding Lab</h3>
 
-      <label for="parentA">Parent A</label><br />
+      <label for="parentA">Selected Animal A</label><br />
       <select id="parentA">${renderAnimalOptions(animals)}</select>
 
       <br /><br />
 
-      <label for="parentB">Parent B</label><br />
+      <label for="parentB">Selected Animal B</label><br />
       <select id="parentB">${renderAnimalOptions(animals)}</select>
 
       <br /><br />
@@ -449,7 +574,7 @@ function renderApp(
 
       <br /><br />
 
-      <button id="breedButton">Breed Selected Parents</button>
+      <button id="breedButton">Breed Selected Pair</button>
     </section>
 
     <hr />
@@ -458,7 +583,7 @@ function renderApp(
       <h3>Kennel Management</h3>
 
       <label for="searchInput">Search</label><br />
-      <input id="searchInput" type="text" value="${activeFilters.search}" placeholder="Search name, species, ID, or inbreeding tier" />
+      <input id="searchInput" type="text" value="${activeFilters.search}" placeholder="Search name, species, ID, role, or inbreeding tier" />
 
       <br /><br />
 
@@ -494,7 +619,7 @@ function renderApp(
     <hr />
 
     <section>
-      <h3>Latest Compatibility / Litter / Inbreeding Info</h3>
+      <h3>Latest Compatibility / Litter / Inbreeding / Sex Validation Info</h3>
       <pre>${JSON.stringify(latestCompatibility, null, 2)}</pre>
     </section>
 
@@ -634,14 +759,48 @@ function renderApp(
   });
 
   breedButton.addEventListener("click", () => {
-    const parentA = animals.find((animal) => animal.id === parentASelect.value);
-    const parentB = animals.find((animal) => animal.id === parentBSelect.value);
+    const selectedA = animals.find((animal) => animal.id === parentASelect.value);
+    const selectedB = animals.find((animal) => animal.id === parentBSelect.value);
     const mode = modeSelect.value as BreedMode;
 
-    if (!parentA || !parentB) return;
+    if (!selectedA || !selectedB) return;
 
-    const compatibility = resolveCompatibility(parentA, parentB, species);
-    const inbreeding = calculateInbreeding(parentA, parentB, animals);
+    const roleResult = resolveBreedingRoles(selectedA, selectedB, mode);
+
+    if (roleResult.blocked) {
+      renderApp(
+        species,
+        traits,
+        breedingRules,
+        mutations,
+        loci,
+        speciesGenotypes,
+        phenotypeRules,
+        animals,
+        null,
+        {
+          blocked: true,
+          blockedReason: roleResult.reason,
+          selectedA: {
+            name: selectedA.name,
+            role: selectedA.sex?.reproductiveRole,
+            chromosomal: selectedA.sex?.chromosomal,
+          },
+          selectedB: {
+            name: selectedB.name,
+            role: selectedB.sex?.reproductiveRole,
+            chromosomal: selectedB.sex?.chromosomal,
+          },
+        },
+        mode,
+        saveStatus,
+        activeFilters
+      );
+      return;
+    }
+
+    const compatibility = resolveCompatibility(roleResult.dam, roleResult.sire, species);
+    const inbreeding = calculateInbreeding(roleResult.dam, roleResult.sire, animals);
 
     if (mode === "realistic" && !compatibility.realisticAllowed) {
       renderApp(
@@ -657,6 +816,10 @@ function renderApp(
         {
           ...compatibility,
           inbreeding,
+          breedingRoles: {
+            dam: roleResult.dam.name,
+            sire: roleResult.sire.name,
+          },
           blocked: true,
           blockedReason: "This pairing is blocked in Realistic Mode. Try Sandbox Mode.",
         },
@@ -668,13 +831,15 @@ function renderApp(
     }
 
     const litter = createLitter(
-      parentA,
-      parentB,
+      roleResult.dam,
+      roleResult.sire,
       compatibility,
       mutations,
       animals,
       phenotypeRules
     );
+
+    roleResult.dam.reproduction.litterCount += 1;
 
     litter.forEach((pup) => animals.push(pup));
 
@@ -694,6 +859,10 @@ function renderApp(
         ...compatibility,
         litterSize: litter.length,
         inbreeding,
+        breedingRoles: {
+          dam: roleResult.dam.name,
+          sire: roleResult.sire.name,
+        },
       },
       mode,
       `Litter generated (${litter.length} pups) and kennel auto-saved.`,
