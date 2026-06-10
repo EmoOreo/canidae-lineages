@@ -26,6 +26,49 @@ function clamp01(value: number): number {
   return Math.max(0, Math.min(1, value));
 }
 
+function getDnaCompleteness(animal: Animal): number {
+  const raw = Number(animal.phenotype?.trait_dna_completeness ?? 1);
+
+  if (Number.isNaN(raw)) {
+    return 1;
+  }
+
+  return clamp01(raw);
+}
+
+function inheritDnaCompleteness(parentA: Animal, parentB: Animal): number {
+  const parentDnaA = getDnaCompleteness(parentA);
+  const parentDnaB = getDnaCompleteness(parentB);
+  const average = (parentDnaA + parentDnaB) / 2;
+
+  // Small biological/reconstruction variance keeps cloned values from feeling rigid
+  // while avoiding unrealistic improvement beyond the stronger parent.
+  const variance = Math.random() * 0.04 - 0.02;
+  const upperBound = Math.max(parentDnaA, parentDnaB);
+  const lowerBound = Math.max(0.5, Math.min(parentDnaA, parentDnaB) - 0.05);
+
+  return round(Math.max(lowerBound, Math.min(upperBound, clamp01(average + variance))));
+}
+
+function dnaCompletenessPenalty(dnaCompleteness: number): number {
+  return clamp01(Math.max(0, 0.9 - dnaCompleteness));
+}
+
+function dnaFertilityMultiplier(dnaCompleteness: number): number {
+  const penalty = dnaCompletenessPenalty(dnaCompleteness);
+  return clamp01(1 - penalty * 0.75);
+}
+
+function dnaStabilityMultiplier(dnaCompleteness: number): number {
+  const penalty = dnaCompletenessPenalty(dnaCompleteness);
+  return clamp01(1 - penalty * 1.05);
+}
+
+function dnaMutationModifier(dnaCompleteness: number): number {
+  const penalty = dnaCompletenessPenalty(dnaCompleteness);
+  return 1 + penalty * 2.2;
+}
+
 function healthGradeFromOverall(
   overallHealth: number
 ): "excellent" | "good" | "fair" | "poor" | "high_risk" {
@@ -97,6 +140,10 @@ export function createOffspring(
     traitResult.phenotype,
     phenotypeRulesData
   );
+
+  const inheritedDnaCompleteness = inheritDnaCompleteness(parentA, parentB);
+  phenotype.trait_dna_completeness = inheritedDnaCompleteness;
+
   let health = inheritHealthProfile(
     parentA,
     parentB,
@@ -115,6 +162,7 @@ export function createOffspring(
       compatibility.compatibility *
       (1 - compatibility.sterilityChance) *
       inbreedingResult.fertilityMultiplier *
+      dnaFertilityMultiplier(inheritedDnaCompleteness) *
       Math.max(0.35, health.overallHealth)
   );
 
@@ -122,12 +170,13 @@ export function createOffspring(
     averageStability *
       compatibility.compatibility *
       inbreedingResult.stabilityMultiplier *
+      dnaStabilityMultiplier(inheritedDnaCompleteness) *
       Math.max(0.45, health.geneticRobustness)
   );
 
   const mutation = resolveMutation(
     compatibility.compatibility,
-    compatibility.mutationModifier,
+    compatibility.mutationModifier * dnaMutationModifier(inheritedDnaCompleteness),
     mutationData
   );
 
@@ -180,6 +229,28 @@ export function createOffspring(
           ...generatedAnomalies.map(
             (anomaly) => `${anomaly.label} affects developmental outcome.`
           ),
+        ])
+      ),
+    };
+  }
+
+  const dnaPenalty = dnaCompletenessPenalty(inheritedDnaCompleteness);
+
+  if (dnaPenalty > 0) {
+    const adjustedOverallHealth = clamp01(health.overallHealth - dnaPenalty * 0.45);
+    const adjustedRobustness = clamp01(health.geneticRobustness - dnaPenalty * 0.65);
+    const adjustedLongevity = clamp01(health.longevityPotential - dnaPenalty * 0.35);
+
+    health = {
+      ...health,
+      overallHealth: round(adjustedOverallHealth),
+      geneticRobustness: round(adjustedRobustness),
+      longevityPotential: round(adjustedLongevity),
+      healthGrade: healthGradeFromOverall(adjustedOverallHealth),
+      healthNotes: Array.from(
+        new Set([
+          ...health.healthNotes,
+          "Incomplete or reconstructed DNA reduces health confidence.",
         ])
       ),
     };
@@ -248,6 +319,11 @@ export function createOffspring(
     phenotype: {
       ...phenotype,
       trait_inbreeding_coefficient: inbreedingResult.coefficient,
+      trait_dna_completeness: inheritedDnaCompleteness,
+      trait_mutation_rate: round(
+        Number(phenotype.trait_mutation_rate ?? 0.05) *
+          dnaMutationModifier(inheritedDnaCompleteness)
+      ),
     },
 
     stats: {

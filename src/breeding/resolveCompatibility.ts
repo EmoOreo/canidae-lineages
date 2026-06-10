@@ -72,6 +72,25 @@ export function resolveCompatibility(
     };
   }
 
+  const extinctCaninaeIds = ["aenocyon_dirus"];
+  const hasExtinctCaninaeParent =
+    extinctCaninaeIds.includes(speciesA.id) ||
+    extinctCaninaeIds.includes(speciesB.id);
+
+  if (hasExtinctCaninaeParent && taxA.subfamily === taxB.subfamily) {
+    return {
+      tier: 6,
+      label: "extinct_caninae_hybrid",
+      realisticAllowed: false,
+      sandboxAllowed: true,
+      compatibility: 0.62,
+      sterilityChance: 0.18,
+      mutationModifier: 1.45,
+      notes:
+        "Extinct Caninae reconstruction hybrid. Sandbox-only, but less unstable than deep cross-tribe pairings.",
+    };
+  }
+
   if (taxA.tribe === taxB.tribe) {
     return {
       tier: 4,

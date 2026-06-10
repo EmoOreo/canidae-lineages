@@ -263,8 +263,8 @@ export function createDevelopmentalAnomalyProfile(
   const riskScore = clamp01(
     baselineRisk * 0.68 +
       inbreedingCoefficient * 0.75 +
-      dnaPenalty * 0.72 +
-      hybridPenalty * 0.18 +
+      dnaPenalty * 0.55 +
+      hybridPenalty * 0.04 +
       mutationPenalty +
       inheritedLiability * 0.7,
   );
@@ -405,10 +405,11 @@ function anomalyChanceFromProfile(
 ): number {
   const hybridPenalty = clamp01(1 - hybridCompatibility);
 
-  // Phase 1D.3C risk-curve rebalance:
+  // Phase 1D.3C / 1D.5I risk-curve rebalance:
   // The generator, assignment, save, and UI paths have been validated.
-  // This curve intentionally makes high-risk inbred/reconstructed animals express
-  // visible but still uncommon congenital anomalies while keeping healthy founders rare.
+  // 1D.5I softens DNA and hybrid penalties after population-test baselines showed
+  // Dog/Wolf × Dire Wolf hybrids clustering near a 40-50% anomaly rate.
+  // This keeps reconstructed/extinct hybrids risky without making them collapse by default.
   // Approximate target curve:
   // risk 0.05 -> ~0.5-1%
   // risk 0.10 -> ~2-3%
@@ -442,7 +443,7 @@ function anomalyChanceFromProfile(
         ? 0.022
         : inbreedingCoefficient * 0.08;
 
-  const hybridChance = hybridPenalty * 0.08;
+  const hybridChance = hybridPenalty * 0.02;
   const mutationChance = Math.min(0.09, mutationLoad * 0.035);
   const inheritedChance = Math.min(
     0.18,
@@ -543,9 +544,9 @@ export function generateDevelopmentalAnomalies(
 
   const secondChance =
     profile.riskScore >= 0.35
-      ? 0.24
+      ? 0.16
       : profile.riskScore >= 0.3
-        ? 0.16
+        ? 0.11
         : profile.riskScore >= 0.22
           ? 0.06
           : 0.005;

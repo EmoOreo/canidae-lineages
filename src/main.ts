@@ -292,6 +292,489 @@ function renderPopulationStats(animals: Animal[]): string {
   `;
 }
 
+function averageNumber(values: number[]): number {
+  if (values.length === 0) return 0;
+
+  return Math.round(
+    (values.reduce((sum, value) => sum + value, 0) / values.length) * 100,
+  ) / 100;
+}
+
+function renderPopulationTestReport(report: any): string {
+  if (!report) {
+    return "<p>No population test run yet.</p>";
+  }
+
+  if (report.action === "standard_founder_suite") {
+    return `
+      <p><strong>Standard Founder Suite Complete.</strong></p>
+      <p><strong>Tests Run:</strong> ${report.reports?.length ?? 0}</p>
+      <p><strong>Target Births Per Test:</strong> ${report.targetBirths ?? 50}</p>
+      <pre>${JSON.stringify(report, null, 2)}</pre>
+    `;
+  }
+
+  return `
+    <pre>${JSON.stringify(report, null, 2)}</pre>
+  `;
+}
+
+function runPopulationTest(
+  selectedA: Animal,
+  selectedB: Animal,
+  mode: BreedMode,
+  species: any,
+  mutations: any,
+  animals: Animal[],
+  phenotypeRules: any,
+  targetBirths = 50,
+): {
+  report: any;
+  latestTestOffspring: Animal | null;
+} {
+  const roleResult = resolveBreedingRoles(selectedA, selectedB, mode);
+
+  if (roleResult.blocked) {
+    return {
+      latestTestOffspring: null,
+      report: {
+        action: "population_test_preview",
+        blocked: true,
+        blockedReason: roleResult.reason,
+      },
+    };
+  }
+
+  const compatibility = resolveCompatibility(
+    roleResult.dam,
+    roleResult.sire,
+    species,
+  );
+
+  if (mode === "realistic" && !compatibility.realisticAllowed) {
+    return {
+      latestTestOffspring: null,
+      report: {
+        action: "population_test_preview",
+        blocked: true,
+        blockedReason:
+          "This pairing is blocked in Realistic Mode. Try Sandbox Mode.",
+        compatibility,
+      },
+    };
+  }
+
+  const safeTarget = Math.max(1, Math.min(250, Math.round(targetBirths || 50)));
+  const simulatedPups: Animal[] = [];
+  let littersGenerated = 0;
+
+  while (simulatedPups.length < safeTarget && littersGenerated < 250) {
+    const litter = createLitter(
+      roleResult.dam,
+      roleResult.sire,
+      compatibility,
+      mutations,
+      animals,
+      phenotypeRules,
+    );
+
+    simulatedPups.push(...litter);
+    littersGenerated += 1;
+  }
+
+  const pups = simulatedPups.slice(0, safeTarget);
+  const anomalyIds = pups.flatMap(
+    (pup) => pup.developmentalAnomalyProfile?.anomalies ?? [],
+  );
+  const mutationIds = pups.flatMap((pup) => pup.genome?.M ?? []);
+  const dnaCompletenessValues = pups.map((pup) =>
+    Number(pup.phenotype?.trait_dna_completeness ?? 1),
+  );
+
+  return {
+    latestTestOffspring: pups[pups.length - 1] ?? null,
+    report: {
+      action: "population_test_preview",
+      savedToKennel: false,
+      targetBirths: safeTarget,
+      birthsGenerated: pups.length,
+      littersGenerated,
+      dam: {
+        name: roleResult.dam.name,
+        id: roleResult.dam.id,
+        health: roleResult.dam.health?.overallHealth ?? null,
+      },
+      sire: {
+        name: roleResult.sire.name,
+        id: roleResult.sire.id,
+        health: roleResult.sire.health?.overallHealth ?? null,
+      },
+      compatibility,
+      averages: {
+        fertility: averageNumber(pups.map((pup) => pup.stats.fertility)),
+        stability: averageNumber(pups.map((pup) => pup.stats.stability)),
+        overallHealth: averageNumber(
+          pups.map((pup) => pup.health?.overallHealth ?? 0),
+        ),
+        geneticRobustness: averageNumber(
+          pups.map((pup) => pup.health?.geneticRobustness ?? 0),
+        ),
+        dnaCompleteness: averageNumber(dnaCompletenessValues),
+        developmentalRisk: averageNumber(
+          pups.map(
+            (pup) => pup.developmentalAnomalyProfile?.riskScore ?? 0,
+          ),
+        ),
+        developmentalStability: averageNumber(
+          pups.map(
+            (pup) =>
+              pup.developmentalAnomalyProfile?.developmentalStability ?? 0,
+          ),
+        ),
+      },
+      minimums: {
+        fertility: pups.length
+          ? Math.min(...pups.map((pup) => pup.stats.fertility))
+          : 0,
+        stability: pups.length
+          ? Math.min(...pups.map((pup) => pup.stats.stability))
+          : 0,
+        overallHealth: pups.length
+          ? Math.min(...pups.map((pup) => pup.health?.overallHealth ?? 0))
+          : 0,
+        dnaCompleteness: dnaCompletenessValues.length
+          ? Math.min(...dnaCompletenessValues)
+          : 0,
+      },
+      anomalyCount: anomalyIds.length,
+      anomalyFrequency:
+        pups.length > 0
+          ? Math.round((anomalyIds.length / pups.length) * 1000) / 1000
+          : 0,
+      anomalyBreakdown: anomalyIds.reduce(
+        (counts: Record<string, number>, anomalyId) => {
+          counts[anomalyId] = (counts[anomalyId] ?? 0) + 1;
+          return counts;
+        },
+        {},
+      ),
+      mutationCount: mutationIds.length,
+      mutationFrequency:
+        pups.length > 0
+          ? Math.round((mutationIds.length / pups.length) * 1000) / 1000
+          : 0,
+      mutationBreakdown: mutationIds.reduce(
+        (counts: Record<string, number>, mutationId) => {
+          counts[mutationId] = (counts[mutationId] ?? 0) + 1;
+          return counts;
+        },
+        {},
+      ),
+      note:
+        "Preview only. These simulated offspring were not saved to the kennel.",
+    },
+  };
+}
+
+function formatPercent(value: number): string {
+  return `${Math.round(value * 1000) / 10}%`;
+}
+
+function slugify(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function downloadTextFile(filename: string, content: string): void {
+  const blob = new Blob([content], { type: "text/markdown;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+function objectBreakdownToMarkdown(
+  title: string,
+  breakdown: Record<string, number> | undefined,
+): string {
+  const entries = Object.entries(breakdown ?? {}).sort((a, b) => b[1] - a[1]);
+
+  if (entries.length === 0) {
+    return `## ${title}
+
+None
+`;
+  }
+
+  return `## ${title}
+
+${entries.map(([key, value]) => `- ${key}: ${value}`).join("\n")}
+`;
+}
+
+function createPopulationReportMarkdown(report: any): string {
+  if (!report || report.action !== "population_test_preview") {
+    return "# Population Test Report\\n\\nNo population test report available.\\n";
+  }
+
+  const generatedAt = new Date().toISOString();
+  const pairingLabel = `${report.dam?.name ?? "Unknown Dam"} × ${
+    report.sire?.name ?? "Unknown Sire"
+  }`;
+
+  return `# Population Test Report
+
+## Metadata
+
+Generated At: ${generatedAt}  
+Simulator Phase: Phase 1D.5H  
+Mode: Population Test Preview  
+Saved To Kennel: ${report.savedToKennel ? "Yes" : "No"}  
+Target Births: ${report.targetBirths ?? "Unknown"}  
+Births Generated: ${report.birthsGenerated ?? 0}  
+Litters Generated: ${report.littersGenerated ?? 0}  
+
+## Pairing
+
+Pairing: ${pairingLabel}
+
+### Dam
+
+Name: ${report.dam?.name ?? "Unknown"}  
+ID: ${report.dam?.id ?? "Unknown"}  
+Health: ${report.dam?.health ?? "Unknown"}  
+
+### Sire
+
+Name: ${report.sire?.name ?? "Unknown"}  
+ID: ${report.sire?.id ?? "Unknown"}  
+Health: ${report.sire?.health ?? "Unknown"}  
+
+## Compatibility
+
+Tier: ${report.compatibility?.tier ?? "Unknown"}  
+Label: ${report.compatibility?.label ?? "Unknown"}  
+Compatibility: ${report.compatibility?.compatibility ?? "Unknown"}  
+Sterility Chance: ${report.compatibility?.sterilityChance ?? "Unknown"}  
+Mutation Modifier: ${report.compatibility?.mutationModifier ?? "Unknown"}  
+Realistic Allowed: ${report.compatibility?.realisticAllowed ? "Yes" : "No"}  
+Sandbox Allowed: ${report.compatibility?.sandboxAllowed ? "Yes" : "No"}  
+Notes: ${report.compatibility?.notes ?? "None"}  
+
+## Population Results
+
+Average Fertility: ${report.averages?.fertility ?? 0}  
+Average Stability: ${report.averages?.stability ?? 0}  
+Average Overall Health: ${report.averages?.overallHealth ?? 0}  
+Average Genetic Robustness: ${report.averages?.geneticRobustness ?? 0}  
+Average DNA Completeness: ${report.averages?.dnaCompleteness ?? 0}  
+Average Developmental Risk: ${report.averages?.developmentalRisk ?? 0}  
+Average Developmental Stability: ${report.averages?.developmentalStability ?? 0}  
+
+## Minimums
+
+Minimum Fertility: ${report.minimums?.fertility ?? 0}  
+Minimum Stability: ${report.minimums?.stability ?? 0}  
+Minimum Overall Health: ${report.minimums?.overallHealth ?? 0}  
+Minimum DNA Completeness: ${report.minimums?.dnaCompleteness ?? 0}  
+
+## Anomalies
+
+Anomaly Count: ${report.anomalyCount ?? 0}  
+Anomaly Frequency: ${formatPercent(report.anomalyFrequency ?? 0)}  
+
+${objectBreakdownToMarkdown("Anomaly Breakdown", report.anomalyBreakdown)}
+
+## Mutations
+
+Mutation Count: ${report.mutationCount ?? 0}  
+Mutation Frequency: ${formatPercent(report.mutationFrequency ?? 0)}  
+
+${objectBreakdownToMarkdown("Mutation Breakdown", report.mutationBreakdown)}
+
+## Raw JSON
+
+\`\`\`json
+${JSON.stringify(report, null, 2)}
+\`\`\`
+
+## Notes
+
+${report.note ?? "Preview only. These simulated offspring were not saved to the kennel."}
+`;
+}
+
+function createPopulationReportFilename(report: any): string {
+  const dam = slugify(report?.dam?.name ?? "unknown-dam");
+  const sire = slugify(report?.sire?.name ?? "unknown-sire");
+  const births = report?.birthsGenerated ?? report?.targetBirths ?? "x";
+
+  return `population-test-${dam}-x-${sire}-${births}-births.md`;
+}
+
+interface StandardSuiteCase {
+  id: string;
+  label: string;
+  damId: string;
+  sireId: string;
+}
+
+const STANDARD_FOUNDER_SUITE: StandardSuiteCase[] = [
+  {
+    id: "dog-wolf",
+    label: "Domestic Dog × Gray Wolf",
+    damId: "founder_domestic_dog_alpha",
+    sireId: "founder_gray_wolf_alpha",
+  },
+  {
+    id: "dog-direwolf",
+    label: "Domestic Dog × Dire Wolf",
+    damId: "founder_domestic_dog_alpha",
+    sireId: "founder_dire_wolf_alpha",
+  },
+  {
+    id: "wolf-direwolf",
+    label: "Gray Wolf × Dire Wolf",
+    damId: "founder_gray_wolf_alpha",
+    sireId: "founder_dire_wolf_alpha",
+  },
+  {
+    id: "dog-coyote",
+    label: "Domestic Dog × Coyote",
+    damId: "founder_domestic_dog_alpha",
+    sireId: "founder_coyote_alpha",
+  },
+  {
+    id: "dog-redfox",
+    label: "Domestic Dog × Red Fox",
+    damId: "founder_domestic_dog_alpha",
+    sireId: "founder_red_fox_alpha",
+  },
+  {
+    id: "dog-fennec",
+    label: "Domestic Dog × Fennec Fox",
+    damId: "founder_domestic_dog_alpha",
+    sireId: "founder_fennec_fox_alpha",
+  },
+];
+
+function runStandardFounderSuite(
+  species: any,
+  mutations: any,
+  animals: Animal[],
+  phenotypeRules: any,
+  targetBirths = 50,
+): any {
+  const mode: BreedMode = "sandbox";
+
+  const reports = STANDARD_FOUNDER_SUITE.map((testCase) => {
+    const dam = findAnimalById(animals, testCase.damId);
+    const sire = findAnimalById(animals, testCase.sireId);
+
+    if (!dam || !sire) {
+      return {
+        action: "population_test_preview",
+        suiteCaseId: testCase.id,
+        suiteCaseLabel: testCase.label,
+        blocked: true,
+        blockedReason: `Missing test animals for ${testCase.label}.`,
+      };
+    }
+
+    const result = runPopulationTest(
+      dam,
+      sire,
+      mode,
+      species,
+      mutations,
+      animals,
+      phenotypeRules,
+      targetBirths,
+    );
+
+    return {
+      ...result.report,
+      suiteCaseId: testCase.id,
+      suiteCaseLabel: testCase.label,
+    };
+  });
+
+  return {
+    action: "standard_founder_suite",
+    generatedAt: new Date().toISOString(),
+    savedToKennel: false,
+    mode,
+    targetBirths,
+    reports,
+    note:
+      "Preview only. Standard founder suite reports were not saved to the kennel.",
+  };
+}
+
+function createSuiteSummaryMarkdown(suite: any): string {
+  if (!suite || suite.action !== "standard_founder_suite") {
+    return "# Standard Founder Suite Summary\\n\\nNo suite report available.\\n";
+  }
+
+  const tableRows = (suite.reports ?? [])
+    .map((report: any) => {
+      if (report.blocked) {
+        return `| ${report.suiteCaseLabel ?? report.suiteCaseId} | BLOCKED | ${report.blockedReason ?? "Unknown"} | | | | | | | | |`;
+      }
+
+      return `| ${report.suiteCaseLabel} | ${report.birthsGenerated} | ${report.littersGenerated} | ${report.compatibility?.tier ?? ""} | ${report.compatibility?.compatibility ?? ""} | ${report.averages?.fertility ?? 0} | ${report.averages?.stability ?? 0} | ${report.averages?.overallHealth ?? 0} | ${report.averages?.dnaCompleteness ?? 0} | ${report.averages?.developmentalRisk ?? 0} | ${formatPercent(report.anomalyFrequency ?? 0)} | ${formatPercent(report.mutationFrequency ?? 0)} |`;
+    })
+    .join("\n");
+
+  const detailedReports = (suite.reports ?? [])
+    .map((report: any) =>
+      report.blocked
+        ? `# ${report.suiteCaseLabel ?? report.suiteCaseId}\n\nBLOCKED: ${report.blockedReason ?? "Unknown"}\n`
+        : createPopulationReportMarkdown(report),
+    )
+    .join("\n\n---\n\n");
+
+  return `# Standard Founder Population Test Suite
+
+## Metadata
+
+Generated At: ${suite.generatedAt}  
+Mode: ${suite.mode}  
+Target Births Per Test: ${suite.targetBirths}  
+Saved To Kennel: ${suite.savedToKennel ? "Yes" : "No"}  
+
+## Summary Table
+
+| Pairing | Births | Litters | Tier | Compatibility | Avg Fertility | Avg Stability | Avg Health | Avg DNA | Avg Dev Risk | Anomaly Freq | Mutation Freq |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+${tableRows}
+
+## Notes
+
+${suite.note}
+
+---
+
+${detailedReports}
+`;
+}
+
+function createSuiteJsonMarkdown(suite: any): string {
+  return `# Standard Founder Suite Raw JSON
+
+\`\`\`json
+${JSON.stringify(suite, null, 2)}
+\`\`\`
+`;
+}
+
 function renderPhenotype(phenotype: Record<string, unknown>): string {
   return Object.entries(phenotype)
     .map(
@@ -763,6 +1246,25 @@ function renderApp(
       <br /><br />
 
       <button id="breedButton">Start Pregnancy</button>
+
+      <hr />
+
+      <h4>Population Test Preview</h4>
+      <label for="populationTestTarget">Target Births</label><br />
+      <input id="populationTestTarget" type="number" min="1" max="250" value="50" />
+
+      <br /><br />
+
+      <button id="populationTestButton">Run Population Test Preview</button>
+      <button id="exportPopulationReportButton">Export Current Report (.md)</button>
+
+      <br /><br />
+
+      <button id="standardSuiteButton">Run Standard Founder Test Suite</button>
+      <button id="exportSuiteSummaryButton">Export Suite Summary (.md)</button>
+      <button id="exportSuiteJsonButton">Export Suite JSON (.md)</button>
+
+      <p><small>Population tests and suites do not save generated test offspring to the kennel.</small></p>
     </section>
 
     <hr />
@@ -818,6 +1320,15 @@ function renderApp(
     </section>
 
     <section>
+      <h3>Population Test Preview Report</h3>
+      ${renderPopulationTestReport(
+        latestCompatibility?.action === "population_test_preview"
+          ? latestCompatibility
+          : null,
+      )}
+    </section>
+
+    <section>
       <h3>Latest Born Offspring</h3>
       ${latestOffspring ? renderAnimal(latestOffspring, animals) : "<p>No offspring born yet.</p>"}
     </section>
@@ -834,6 +1345,19 @@ function renderApp(
   const parentBSelect = document.querySelector<HTMLSelectElement>("#parentB");
   const modeSelect = document.querySelector<HTMLSelectElement>("#mode");
   const breedButton = document.querySelector<HTMLButtonElement>("#breedButton");
+  const populationTestTarget =
+    document.querySelector<HTMLInputElement>("#populationTestTarget");
+  const populationTestButton = document.querySelector<HTMLButtonElement>(
+    "#populationTestButton",
+  );
+  const exportPopulationReportButton =
+    document.querySelector<HTMLButtonElement>("#exportPopulationReportButton");
+  const standardSuiteButton =
+    document.querySelector<HTMLButtonElement>("#standardSuiteButton");
+  const exportSuiteSummaryButton =
+    document.querySelector<HTMLButtonElement>("#exportSuiteSummaryButton");
+  const exportSuiteJsonButton =
+    document.querySelector<HTMLButtonElement>("#exportSuiteJsonButton");
   const saveButton = document.querySelector<HTMLButtonElement>("#saveButton");
   const resetButton = document.querySelector<HTMLButtonElement>("#resetButton");
   const advanceGestationButton = document.querySelector<HTMLButtonElement>(
@@ -867,6 +1391,12 @@ function renderApp(
     !parentBSelect ||
     !modeSelect ||
     !breedButton ||
+    !populationTestTarget ||
+    !populationTestButton ||
+    !exportPopulationReportButton ||
+    !standardSuiteButton ||
+    !exportSuiteSummaryButton ||
+    !exportSuiteJsonButton ||
     !saveButton ||
     !resetButton ||
     !advanceGestationButton ||
@@ -1081,6 +1611,107 @@ function renderApp(
     document.querySelectorAll("details").forEach((element) => {
       (element as HTMLDetailsElement).open = false;
     });
+  });
+
+  exportPopulationReportButton.addEventListener("click", () => {
+    if (latestCompatibility?.action !== "population_test_preview") {
+      window.alert("Run a Population Test Preview first.");
+      return;
+    }
+
+    downloadTextFile(
+      createPopulationReportFilename(latestCompatibility),
+      createPopulationReportMarkdown(latestCompatibility),
+    );
+  });
+
+  standardSuiteButton.addEventListener("click", () => {
+    const suite = runStandardFounderSuite(
+      species,
+      mutations,
+      animals,
+      phenotypeRules,
+      Number(populationTestTarget.value || 50),
+    );
+
+    renderApp(
+      species,
+      traits,
+      breedingRules,
+      mutations,
+      loci,
+      speciesGenotypes,
+      phenotypeRules,
+      animals,
+      null,
+      suite,
+      "sandbox",
+      `Standard founder suite generated ${suite.reports?.length ?? 0} population test report(s). Kennel not saved.`,
+      activeFilters,
+    );
+  });
+
+  exportSuiteSummaryButton.addEventListener("click", () => {
+    if (latestCompatibility?.action !== "standard_founder_suite") {
+      window.alert("Run the Standard Founder Test Suite first.");
+      return;
+    }
+
+    downloadTextFile(
+      "suite-summary-standard-founder-population-tests.md",
+      createSuiteSummaryMarkdown(latestCompatibility),
+    );
+  });
+
+  exportSuiteJsonButton.addEventListener("click", () => {
+    if (latestCompatibility?.action !== "standard_founder_suite") {
+      window.alert("Run the Standard Founder Test Suite first.");
+      return;
+    }
+
+    downloadTextFile(
+      "suite-raw-json-standard-founder-population-tests.md",
+      createSuiteJsonMarkdown(latestCompatibility),
+    );
+  });
+
+  populationTestButton.addEventListener("click", () => {
+    const selectedA = animals.find(
+      (animal) => animal.id === parentASelect.value,
+    );
+    const selectedB = animals.find(
+      (animal) => animal.id === parentBSelect.value,
+    );
+    const mode = modeSelect.value as BreedMode;
+
+    if (!selectedA || !selectedB) return;
+
+    const result = runPopulationTest(
+      selectedA,
+      selectedB,
+      mode,
+      species,
+      mutations,
+      animals,
+      phenotypeRules,
+      Number(populationTestTarget.value || 50),
+    );
+
+    renderApp(
+      species,
+      traits,
+      breedingRules,
+      mutations,
+      loci,
+      speciesGenotypes,
+      phenotypeRules,
+      animals,
+      result.latestTestOffspring,
+      result.report,
+      mode,
+      `Population test preview generated ${result.report.birthsGenerated ?? 0} simulated birth(s). Kennel not saved.`,
+      activeFilters,
+    );
   });
 
   breedButton.addEventListener("click", () => {
