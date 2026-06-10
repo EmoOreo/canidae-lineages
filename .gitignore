@@ -28,3 +28,16 @@ screenshots/
 # Playwright output
 playwright-report/
 test-results/
+# Population test outputs
+population-tests/
+
+# Generated balancing reports
+*.population-test.md
+suite-summary-standard-founder-population-tests.md
+suite-raw-json-standard-founder-population-tests.md
+
+# Local archives (keep folder structure, ignore contents)
+population-tests/**
+!population-tests/
+!population-tests/archived/
+!population-tests/.gitkeep
