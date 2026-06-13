@@ -1,0 +1,16 @@
+Add retroactive project history documentation
+
+Adds project-history documentation for completed Canidae Lineages milestones.
+
+Includes:
+- milestone records
+- narrative devlogs
+- release notes
+- reusable commit message templates
+
+Covered phases:
+- 1D.5F Population Testing
+- 1D.5I Hybrid Compatibility Rebalance
+- 1D.5J Developmental Risk Audit
+- 1D.8 Genesis DRM Extraction
+- 1D.9A Animal Summary Card

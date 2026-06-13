@@ -1,0 +1,25 @@
+Complete Phase 1D.9A animal summary card
+
+Phase 1D.9A — Animal Summary Card
+
+Added breeder-focused animal summary cards.
+
+Features:
+- Breeding Value grading
+- Bloodline tags
+- Founder identification
+- Hybrid identification
+- Extinct reconstruction identification
+- Health risk tagging
+- Stability and fertility visibility
+- Compact breeder-first presentation layer
+
+Outcome:
+Players can evaluate breeding candidates in seconds without reading full genetic profiles.
+
+No changes to:
+- DRM genetics
+- inheritance
+- mutation generation
+- developmental audit calculations
+- compatibility logic
